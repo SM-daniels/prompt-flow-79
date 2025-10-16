@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,89 +10,60 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --bg0: 222 15% 6%;
+    --bg1: 222 18% 8%;
+    --bg2: 222 22% 11%;
+    --bg3: 222 24% 14%;
+    --borderc: 222 20% 18%;
+    --muted: 222 18% 24%;
+    --textc: 220 15% 90%;
+    --textdim: 220 12% 68%;
+    --primary: 250 75% 65%;
+    --primary2: 250 100% 74%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --background: var(--bg0);
+    --foreground: var(--textc);
+    --card: var(--bg1);
+    --card-foreground: var(--textc);
+    --popover: var(--bg2);
+    --popover-foreground: var(--textc);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--bg2);
+    --secondary-foreground: var(--textc);
+    --muted-foreground: var(--textdim);
+    --accent: var(--primary);
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--borderc);
+    --input: var(--bg2);
+    --ring: var(--primary);
 
     --radius: 0.5rem;
+    --sidebar-background: var(--bg1);
+    --sidebar-foreground: var(--textc);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--bg2);
+    --sidebar-accent-foreground: var(--textc);
+    --sidebar-border: var(--borderc);
+    --sidebar-ring: var(--primary);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --glow-sm: 0 0 12px rgba(109, 94, 240, 0.35);
+    --glow-md: 0 0 12px rgba(109, 94, 240, 0.35), 0 0 28px rgba(139, 123, 255, 0.25);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --bg0: 222 15% 6%;
+    --bg1: 222 18% 8%;
+    --bg2: 222 22% 11%;
+    --bg3: 222 24% 14%;
+    --borderc: 222 20% 18%;
+    --muted: 222 18% 24%;
+    --textc: 220 15% 90%;
+    --textdim: 220 12% 68%;
+    --primary: 250 75% 65%;
+    --primary2: 250 100% 74%;
   }
 }
 
@@ -101,5 +74,16 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-semibold px-4 py-2 rounded-lg transition-all duration-300;
+  }
+  .btn-primary:hover {
+    @apply bg-primary2;
+    box-shadow: var(--glow-md);
   }
 }

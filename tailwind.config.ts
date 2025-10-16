@@ -57,11 +57,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        bg0: "hsl(var(--bg0))",
+        bg1: "hsl(var(--bg1))",
+        bg2: "hsl(var(--bg2))",
+        bg3: "hsl(var(--bg3))",
+        borderc: "hsl(var(--borderc))",
+        textc: "hsl(var(--textc))",
+        textdim: "hsl(var(--textdim))",
+        primary2: "hsl(var(--primary2))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "2xl": "1rem",
+      },
+      boxShadow: {
+        glow: "var(--glow-sm)",
+        glowMd: "var(--glow-md)",
+      },
+      fontFamily: {
+        sans: ['Cairo', 'system-ui', '-apple-system', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

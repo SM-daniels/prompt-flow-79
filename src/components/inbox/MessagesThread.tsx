@@ -31,8 +31,9 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
         .eq('contact_id', contactId)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
+      console.log('[MessagesThread] latest conversation for contact', contactId, '=>', data?.id, 'error:', error);
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
@@ -40,49 +41,69 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
   });
 
   const conversationId = conversation?.id || null;
+  const messagesKey = conversationId ? `conv-${conversationId}` : contactId ? `contact-${contactId}` : 'none';
 
-  // Fetch messages
+  // Fetch messages (fallback to contact_id when no conversation)
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['messages', conversationId, user?.id],
+    queryKey: ['messages', messagesKey, user?.id],
     queryFn: async () => {
-      if (!conversationId) return [];
+      if (!user || (!conversationId && !contactId)) return [];
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
+      let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
+      if (conversationId) {
+        query = query.eq('conversation_id', conversationId);
+      } else if (contactId) {
+        query = query.eq('contact_id', contactId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as Message[];
     },
-    enabled: !!user && !!conversationId
+    enabled: !!user && (!!conversationId || !!contactId)
   });
 
-  // Realtime subscription
+  // Realtime subscription (supports conv or contact fallback)
   useEffect(() => {
-    if (!conversationId) return;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
 
-    const channel = supabase
-      .channel(`conv-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-        }
-      )
-      .subscribe();
+    if (conversationId) {
+      channel = supabase
+        .channel(`conv-${conversationId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['messages', messagesKey] });
+          }
+        )
+        .subscribe();
+    } else if (contactId) {
+      channel = supabase
+        .channel(`contact-${contactId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `contact_id=eq.${contactId}`
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['messages', messagesKey] });
+          }
+        )
+        .subscribe();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, [conversationId, queryClient]);
+  }, [conversationId, contactId, messagesKey, queryClient]);
 
   // Auto-scroll to bottom
   useEffect(() => {

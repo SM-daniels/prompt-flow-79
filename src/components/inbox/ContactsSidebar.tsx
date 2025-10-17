@@ -76,11 +76,13 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
         .eq('organization_id', userOrg.organization_id)
         .order('updated_at', { ascending: false });
 
-      console.log('[ContactsSidebar] org contacts results:', contactsData?.length, 'error:', contactsError);
+       console.log('[ContactsSidebar] org contacts results:', contactsData?.length, 'error:', contactsError);
+       // Ensure we always return an array even if null
 
-      if (contactsError || !contactsData) throw contactsError || new Error('No contacts');
 
-      return await withPreview(contactsData);
+       if (contactsError || !contactsData) throw contactsError || new Error('No contacts');
+
+       return await withPreview(contactsData || []);
     },
     enabled: !!user
   });

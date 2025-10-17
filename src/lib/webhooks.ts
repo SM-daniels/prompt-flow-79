@@ -44,3 +44,23 @@ export const pauseAIWebhook = async (conversationId: string, organizationId?: st
 
   return response.json();
 };
+
+const NEW_USER_WEBHOOK_URL = "https://webhook.starmetaia6.com.br/webhook/new_user";
+
+export const newUserWebhook = async (userId: string) => {
+  const response = await fetch(NEW_USER_WEBHOOK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: userId,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Webhook failed: ${response.statusText}`);
+  }
+
+  return response.json();
+};

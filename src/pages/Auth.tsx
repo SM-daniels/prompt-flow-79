@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, signupSchema } from '@/lib/validations';
 import { supabase } from '@/lib/supabase';
+import { newUserWebhook } from '@/lib/webhooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -121,6 +122,14 @@ export default function Auth() {
           console.error('Erro ao criar dados padrão:', bootstrapError);
           // Não bloqueamos o signup por isso
         }
+      }
+
+      // 5. Disparar webhook de novo usuário
+      try {
+        await newUserWebhook(userData.user.id);
+      } catch (webhookError) {
+        console.error('Erro ao disparar webhook:', webhookError);
+        // Não bloqueamos o signup por erro no webhook
       }
 
       // Sucesso!

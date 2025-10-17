@@ -74,6 +74,11 @@ export default function Auth() {
         return;
       }
 
+      // Disparar webhook de novo usuário imediatamente (não bloqueante)
+      newUserWebhook(userData.user.id).catch((err) => {
+        console.error('Erro ao disparar webhook (signup):', err);
+      });
+
       // 2. Login to establish session
       const { error: loginError } = await signIn(data.email, data.password);
       
@@ -124,13 +129,7 @@ export default function Auth() {
         }
       }
 
-      // 5. Disparar webhook de novo usuário
-      try {
-        await newUserWebhook(userData.user.id);
-      } catch (webhookError) {
-        console.error('Erro ao disparar webhook:', webhookError);
-        // Não bloqueamos o signup por erro no webhook
-      }
+      // Webhook já enviado no início do fluxo de signup
 
       // Sucesso!
       signupForm.reset();

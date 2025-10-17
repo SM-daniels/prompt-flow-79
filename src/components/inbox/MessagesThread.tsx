@@ -19,13 +19,14 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch the latest conversation for this contact
+  // Fetch or create conversation for this contact
   const { data: conversation } = useQuery({
     queryKey: ['latest-conversation', contactId],
     queryFn: async () => {
-      if (!contactId) return null;
+      if (!contactId || !user) return null;
 
-      const { data, error } = await supabase
+      // Try to find existing conversation
+      const { data: existing, error } = await supabase
         .from('conversations')
         .select('*')
         .eq('contact_id', contactId)
@@ -33,9 +34,44 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
         .limit(1)
         .maybeSingle();
 
-      console.log('[MessagesThread] latest conversation for contact', contactId, '=>', data?.id, 'error:', error);
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      console.log('[MessagesThread] existing conversation for contact', contactId, '=>', existing?.id, 'error:', error);
+      
+      if (existing) return existing;
+
+      // Create new conversation if none exists
+      const { data: userOrg } = await supabase
+        .from('users_organizations')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Fallback: get contact's organization_id if user has no org
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('organization_id, owner_id')
+        .eq('id', contactId)
+        .single();
+
+      const orgId = userOrg?.organization_id || contact?.organization_id;
+      
+      if (!orgId) {
+        console.warn('[MessagesThread] No organization found, cannot create conversation');
+        return null;
+      }
+
+      const { data: newConv, error: createError } = await supabase
+        .from('conversations')
+        .insert({
+          organization_id: orgId,
+          contact_id: contactId,
+          paused_ai: false
+        })
+        .select()
+        .single();
+
+      console.log('[MessagesThread] created new conversation:', newConv?.id, 'error:', createError);
+      
+      return newConv;
     },
     enabled: !!contactId && !!user
   });

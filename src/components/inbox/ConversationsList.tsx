@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase, Message } from '@/lib/supabase';
+import { supabase, Message, Conversation } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare } from 'lucide-react';
@@ -13,7 +13,7 @@ type ConversationsListProps = {
   onSelectConversation: (id: string) => void;
 };
 
-type Conversation = {
+type ConversationWithMessage = {
   conversation_id: string;
   lastMessage: Message;
   paused_ai: boolean;
@@ -40,17 +40,32 @@ export default function ConversationsList({
 
       if (error) throw error;
 
-      // Group by conversation_id
+      // Group by conversation_id and get paused status from conversations table
       const grouped = (data as Message[]).reduce((acc, msg) => {
         if (!acc[msg.conversation_id]) {
           acc[msg.conversation_id] = {
             conversation_id: msg.conversation_id,
             lastMessage: msg,
-            paused_ai: msg.paused_ai
+            paused_ai: false // Will be updated from conversations table
           };
         }
         return acc;
-      }, {} as Record<string, Conversation>);
+      }, {} as Record<string, ConversationWithMessage>);
+
+      // Fetch conversation data for paused_ai status
+      const conversationIds = Object.keys(grouped);
+      if (conversationIds.length > 0) {
+        const { data: convData } = await supabase
+          .from('conversations')
+          .select('id, paused_ai')
+          .in('id', conversationIds);
+
+        convData?.forEach((conv) => {
+          if (grouped[conv.id]) {
+            grouped[conv.id].paused_ai = conv.paused_ai;
+          }
+        });
+      }
 
       return Object.values(grouped);
     },

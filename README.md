@@ -1,3 +1,142 @@
+# Inbox Chatwoot-Style (Supabase + Realtime)
+
+Sistema de inbox multi-tenant estilo Chatwoot com:
+- ✅ Autenticação Supabase
+- ✅ Multi-tenant com organizações
+- ✅ Pausa de IA temporária (30 min) com auto-despausa
+- ✅ Suporte a MIG, mídias e interpretações
+- ✅ Realtime para mensagens e conversas
+- ✅ Design cinza + roxo glow + fonte Cairo
+
+---
+
+## 🚀 Setup Rápido
+
+### 1. Instalar dependências
+```bash
+npm install
+```
+
+### 2. Configurar Supabase
+
+#### a) Executar Migrations
+Execute os SQL scripts no **Supabase SQL Editor** na ordem:
+
+1. **Migration 002** (multi-tenant) - veja `MIGRATION_002.md` **← IMPORTANTE!**
+
+#### b) Configurar Auto-Unpause
+Execute no SQL Editor:
+```sql
+select cron.schedule(
+  'auto-unpause-conversations',
+  '* * * * *',
+  $$select public.auto_unpause_conversations();$$
+);
+```
+
+### 3. Criar Organização e Usuário
+
+Após fazer login, execute no SQL Editor (substitua `SEU-USER-ID` pelo seu ID):
+
+```sql
+-- 1. Criar organização
+insert into public.organizations (name) 
+values ('Minha Empresa') 
+returning *;
+
+-- 2. Associar usuário (copie o org ID da query acima)
+insert into public.users_organizations (user_id, organization_id, role)
+values ('SEU-USER-ID', 'ORG-ID-AQUI', 'org_admin');
+```
+
+### 4. Rodar aplicação
+```bash
+npm run dev
+```
+
+---
+
+## 📋 Funcionalidades
+
+### ✅ Implementado
+
+- **Multi-tenant**: organizações isoladas com RLS
+- **Roles**: super_admin, org_admin, agent
+- **Pausa de IA (30 min)**: auto-despausa via pg_cron
+- **Webhook atualizado**: `https://n8n.starmetaia6.com.br/webhook-test/legacy_send`
+- **Toast otimizado**: removido sucesso de envio, mantido IA pausada com timer
+- **Estrutura de dados**: MIG, mídias, interpretações preparadas
+
+### 🚧 Próximos Passos (Opcional)
+
+- Interface de admin para gerenciar organizações
+- Upload de mídias (Supabase Storage)
+- Processamento de interpretações (ASR/OCR/Vision via edge functions)
+- Filtros por organização no frontend
+
+---
+
+## 🎨 Design System
+
+- **Paleta**: Cinza (#0F1115 → #222938) + Roxo (#6D5EF0) com glow
+- **Fonte**: Cairo (400-700)
+- **Ícones**: Lucide React com hover glow
+
+---
+
+## 📦 Estrutura
+
+```
+src/
+├── lib/
+│   ├── supabase.ts       # Cliente + tipos
+│   ├── webhooks.ts       # Webhooks atualizados
+│   ├── dateUtils.ts      # Formatação PT-BR
+│   └── chatParser.ts     # Parser do campo chat
+├── contexts/
+│   └── AuthContext.tsx   # Auth Supabase
+├── components/inbox/
+│   ├── ContactsSidebar.tsx
+│   ├── ConversationsList.tsx
+│   ├── MessagesThread.tsx
+│   └── MessageComposer.tsx  # Pausa 30 min + envio
+└── pages/
+    ├── Auth.tsx
+    └── InboxLayout.tsx
+```
+
+---
+
+## 🔐 Segurança
+
+- RLS por organização via `public.user_in_org()`
+- Policies separadas para contacts, conversations, messages
+- Security definer functions para evitar recursão RLS
+
+---
+
+## 🐛 Troubleshooting
+
+### "User not in organization"
+Execute o SQL de associação (passo 3 do setup)
+
+### Auto-unpause não funciona
+Verifique se o cron job foi criado:
+```sql
+select * from cron.job where jobname = 'auto-unpause-conversations';
+```
+
+### Mensagens não aparecem
+Verifique RLS: usuário deve estar associado à organização
+
+---
+
+## 📞 Suporte
+
+Consulte `MIGRATION_002.md` para detalhes completos da estrutura multi-tenant.
+
+---
+
 # Welcome to your Lovable project
 
 ## Project info

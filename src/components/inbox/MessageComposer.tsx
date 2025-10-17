@@ -37,8 +37,7 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
           contact_id: contactId,
           direction: 'outbound',
           body: text.trim(),
-          status: 'queued',
-          paused_ai: false
+          status: 'queued'
         })
         .select()
         .single();
@@ -60,11 +59,7 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
         .eq('id', newMessage.id);
 
       setText('');
-      toast({
-        title: 'Mensagem enviada',
-        description: 'Sua mensagem foi enviada com sucesso'
-      });
-
+      // Removed success toast as per requirements
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     } catch (error: any) {
       toast({
@@ -78,25 +73,34 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
   };
 
   const handlePauseAI = async () => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
 
     setIsPausing(true);
 
     try {
+      // Calculate pause until (30 minutes from now)
+      const pausedAt = new Date();
+      const pausedUntil = new Date(pausedAt.getTime() + 30 * 60 * 1000);
+
       await pauseAIWebhook(conversationId);
 
-      // Update all messages in this conversation
+      // Update conversation with pause timestamps
       await supabase
-        .from('messages')
-        .update({ paused_ai: true })
-        .eq('conversation_id', conversationId);
+        .from('conversations')
+        .update({ 
+          paused_ai: true,
+          paused_at: pausedAt.toISOString(),
+          paused_until: pausedUntil.toISOString()
+        })
+        .eq('id', conversationId);
 
       toast({
-        title: 'IA pausada',
-        description: 'A IA foi pausada para esta conversa'
+        title: 'IA pausada por 30 minutos',
+        description: `A IA retornará automaticamente às ${pausedUntil.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
       });
 
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     } catch (error: any) {
       toast({
         variant: 'destructive',

@@ -31,10 +31,23 @@ export type Message = {
   direction: 'inbound' | 'outbound';
   body?: string;
   attachments?: any;
-  status: 'queued' | 'sent' | 'delivered' | 'failed';
+  status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
   error?: string;
-  paused_ai: boolean;
+  mig?: string;
+  media?: any[];
+  interpretations?: any;
   chat?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Conversation = {
+  id: string;
+  organization_id: string;
+  contact_id: string;
+  paused_ai: boolean;
+  paused_at?: string;
+  paused_until?: string;
   created_at: string;
   updated_at: string;
 };

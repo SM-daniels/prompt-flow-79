@@ -11,9 +11,10 @@ import { sendMessageWebhook, pauseAIWebhook } from '@/lib/webhooks';
 type MessageComposerProps = {
   conversationId: string | null;
   contactId: string | null;
+  conversation?: any;
 };
 
-export default function MessageComposer({ conversationId, contactId }: MessageComposerProps) {
+export default function MessageComposer({ conversationId, contactId, conversation }: MessageComposerProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -185,20 +186,31 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
       />
 
       <div className="flex items-center justify-between">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handlePauseAI}
-          disabled={!conversationId || isPausing}
-          className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30"
-        >
-          {isPausing ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <PauseCircle className="w-4 h-4 mr-2" />
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePauseAI}
+            disabled={isPausing}
+            className={
+              conversation?.paused_ai
+                ? "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30"
+                : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30"
+            }
+          >
+            {isPausing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <PauseCircle className="w-4 h-4 mr-2" />
+            )}
+            {conversation?.paused_ai ? 'IA Pausada' : 'Pausar IA'}
+          </Button>
+          {conversation?.paused_ai && conversation?.paused_until && (
+            <span className="text-xs text-muted-foreground">
+              Retorna às {new Date(conversation.paused_until).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
           )}
-          Pausar IA
-        </Button>
+        </div>
 
         <Button
           onClick={handleSend}

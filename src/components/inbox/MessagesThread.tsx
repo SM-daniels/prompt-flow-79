@@ -220,7 +220,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
 
       {/* Composer */}
       <div className="border-t border-borderc bg-bg1">
-        <MessageComposer conversationId={conversationId} contactId={contactId} />
+        <MessageComposer conversationId={conversationId} contactId={contactId} conversation={conversation} />
       </div>
     </div>
   );

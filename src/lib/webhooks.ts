@@ -1,5 +1,5 @@
-const WEBHOOK_SEND_URL = "https://webhook.starmetaia6.com.br/webhook/legacy_send";
-const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/legacy_pause";
+const WEBHOOK_SEND_URL = "https://webhook.starmetaia6.com.br/webhook/send";
+const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/pause";
 
 export const sendMessageWebhook = async (payload: {
   organization_id: string;
@@ -35,27 +35,6 @@ export const pauseAIWebhook = async (conversationId: string, organizationId?: st
       paused: true,
       duration_minutes: 30,
       reason: "manual",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Webhook failed: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-const NEW_USER_WEBHOOK_URL = "https://webhook.starmetaia6.com.br/webhook/new_user";
-
-export const newUserWebhook = async (userId: string, orgName: string) => {
-  const response = await fetch(NEW_USER_WEBHOOK_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      org_name: orgName,
     }),
   });
 

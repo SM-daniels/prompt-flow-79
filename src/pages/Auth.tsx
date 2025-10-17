@@ -57,18 +57,25 @@ export default function Auth() {
     const { error, data: userData } = await signUp(data.email, data.password);
     
     if (!error && userData.user) {
-      // Associate user with organization (client_id)
-      const { error: orgError } = await supabase
-        .from('users_organizations')
-        .insert({
-          user_id: userData.user.id,
-          organization_id: data.clientId
-        });
+      // Login automatically to get auth session
+      const { error: loginError } = await signIn(data.email, data.password);
+      
+      if (!loginError) {
+        // Now user is authenticated, can insert with RLS
+        const { error: orgError } = await supabase
+          .from('users_organizations')
+          .insert({
+            user_id: userData.user.id,
+            organization_id: data.clientId
+          });
 
-      if (orgError) {
-        signupForm.setError('clientId', { message: 'Client ID inválido ou erro ao associar' });
-      } else {
-        signupForm.reset();
+        if (orgError) {
+          console.error('Erro ao associar organização:', orgError);
+          signupForm.setError('clientId', { message: 'Client ID inválido ou erro ao associar' });
+        } else {
+          signupForm.reset();
+          navigate('/app');
+        }
       }
     }
     

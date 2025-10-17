@@ -45,41 +45,94 @@ export default function Auth() {
   const handleSignup = async (data: any) => {
     setIsLoading(true);
     
-    // Validate admin token (hardcoded for now - should be env var)
-    const ADMIN_TOKEN = 'admin123';
-    if (data.adminToken !== ADMIN_TOKEN) {
-      signupForm.setError('adminToken', { message: 'Admin token inválido' });
-      setIsLoading(false);
-      return;
-    }
+    try {
+      // Validate admin token (hardcoded for now - should be env var)
+      const ADMIN_TOKEN = 'admin123';
+      if (data.adminToken !== ADMIN_TOKEN) {
+        signupForm.setError('adminToken', { message: 'Admin token inválido' });
+        setIsLoading(false);
+        return;
+      }
 
-    // Create user account
-    const { error, data: userData } = await signUp(data.email, data.password);
-    
-    if (!error && userData.user) {
-      // Login automatically to get auth session
+      // 1. Create user account
+      const { error: signUpError, data: userData } = await signUp(data.email, data.password);
+      
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          signupForm.setError('email', { message: 'Email já cadastrado. Faça login.' });
+        } else {
+          signupForm.setError('email', { message: signUpError.message });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (!userData.user) {
+        signupForm.setError('email', { message: 'Erro ao criar usuário' });
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Login to establish session
       const { error: loginError } = await signIn(data.email, data.password);
       
-      if (!loginError) {
-        // Now user is authenticated, can insert with RLS
-        const { error: orgError } = await supabase
-          .from('users_organizations')
-          .insert({
-            user_id: userData.user.id,
-            organization_id: data.clientId
+      if (loginError) {
+        signupForm.setError('email', { message: 'Usuário criado mas falha no login' });
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Provisionar organização usando RPC
+      const { data: provisionData, error: provisionError } = await supabase
+        .rpc('provision_user', {
+          p_user_id: userData.user.id,
+          p_org_name: null,
+          p_join_org_id: data.clientId,
+          p_role: 'agent'
+        });
+
+      if (provisionError) {
+        console.error('Erro ao provisionar:', provisionError);
+        signupForm.setError('clientId', { 
+          message: 'Client ID inválido ou erro ao associar organização' 
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const organizationId = provisionData?.[0]?.organization_id;
+      
+      if (!organizationId) {
+        signupForm.setError('clientId', { message: 'Organização não encontrada' });
+        setIsLoading(false);
+        return;
+      }
+
+      // 4. Bootstrap dados padrão (apenas se for owner)
+      const effectiveRole = provisionData?.[0]?.effective_role;
+      if (effectiveRole === 'owner') {
+        const { error: bootstrapError } = await supabase
+          .rpc('bootstrap_org_defaults', {
+            p_org_id: organizationId,
+            p_owner_id: userData.user.id
           });
 
-        if (orgError) {
-          console.error('Erro ao associar organização:', orgError);
-          signupForm.setError('clientId', { message: 'Client ID inválido ou erro ao associar' });
-        } else {
-          signupForm.reset();
-          navigate('/app');
+        if (bootstrapError) {
+          console.error('Erro ao criar dados padrão:', bootstrapError);
+          // Não bloqueamos o signup por isso
         }
       }
+
+      // Sucesso!
+      signupForm.reset();
+      navigate('/app');
+      
+    } catch (err) {
+      console.error('Erro inesperado no signup:', err);
+      signupForm.setError('email', { message: 'Erro inesperado. Tente novamente.' });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (

@@ -23,26 +23,55 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = async () => {
-    if (!text.trim() || !conversationId || !contactId || !user) return;
+    if (!text.trim() || !contactId || !user) return;
 
     setIsSending(true);
 
     try {
-      // Get user's organization
+      // Try to get user's organization (may not exist in legacy data)
       const { data: userOrg } = await supabase
         .from('users_organizations')
         .select('organization_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!userOrg) throw new Error('Organização não encontrada');
+      // Fallback: read contact to extract organization_id
+      let orgId = userOrg?.organization_id as string | undefined;
+      if (!orgId && contactId) {
+        const { data: contactRow } = await supabase
+          .from('contacts')
+          .select('organization_id, owner_id')
+          .eq('id', contactId)
+          .maybeSingle();
+        orgId = contactRow?.organization_id || undefined;
+      }
+
+      if (!orgId) throw new Error('Organização não encontrada para este contato');
+
+      // Ensure conversation exists
+      let convId = conversationId as string | null;
+      if (!convId && contactId) {
+        const { data: newConv, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            organization_id: orgId,
+            contact_id: contactId,
+            paused_ai: false
+          })
+          .select()
+          .single();
+        if (createError) throw createError;
+        convId = newConv.id;
+      }
+
+      if (!convId) throw new Error('Não foi possível criar a conversa');
 
       // Insert message with queued status
       const { data: newMessage, error: insertError } = await supabase
         .from('messages')
         .insert({
-          organization_id: userOrg.organization_id,
-          conversation_id: conversationId,
+          organization_id: orgId,
+          conversation_id: convId,
           contact_id: contactId,
           direction: 'outbound',
           body: text.trim(),
@@ -53,11 +82,11 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
 
       if (insertError) throw insertError;
 
-      // Call webhook
+      // Call webhook (best-effort)
       const response = await sendMessageWebhook({
-        organization_id: userOrg.organization_id,
+        organization_id: orgId,
         contact_id: contactId,
-        conversation_id: conversationId,
+        conversation_id: convId,
         text: text.trim(),
         metadata: { channel: 'site' }
       });
@@ -65,14 +94,16 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
       // Update status and MIG
       await supabase
         .from('messages')
-        .update({ 
+        .update({
           status: response.status || 'sent',
           mig: response.mig || null
         })
         .eq('id', newMessage.id);
 
       setText('');
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['latest-conversation', contactId] });
       queryClient.invalidateQueries({ queryKey: ['contacts-with-preview'] });
     } catch (error: any) {
       toast({
@@ -150,7 +181,7 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         className="min-h-[80px] max-h-[200px] resize-none bg-bg2 border-borderc text-textc focus:ring-primary"
-        disabled={!conversationId || isSending}
+        disabled={!contactId || isSending}
       />
 
       <div className="flex items-center justify-between">
@@ -171,7 +202,7 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
 
         <Button
           onClick={handleSend}
-          disabled={!text.trim() || !conversationId || isSending}
+          disabled={!text.trim() || !contactId || isSending}
           className="btn-primary"
         >
           {isSending ? (

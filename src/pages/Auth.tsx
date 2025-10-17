@@ -62,8 +62,7 @@ export default function Auth() {
         .from('users_organizations')
         .insert({
           user_id: userData.user.id,
-          organization_id: data.clientId,
-          role: 'agent'
+          organization_id: data.clientId
         });
 
       if (orgError) {

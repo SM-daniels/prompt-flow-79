@@ -10,7 +10,7 @@ export const signupSchema = z.object({
   password: z.string().min(6, { message: 'Senha deve ter no mínimo 6 caracteres' }),
   confirmPassword: z.string(),
   adminToken: z.string().min(1, { message: 'Admin token é obrigatório' }),
-  clientId: z.string().uuid({ message: 'Client ID deve ser um UUID válido' })
+  orgName: z.string().trim().min(1, { message: 'Nome da organização é obrigatório' }).max(100, { message: 'Nome muito longo' })
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
   path: ['confirmPassword']

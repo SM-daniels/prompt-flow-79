@@ -29,7 +29,7 @@ export default function Auth() {
 
   const signupForm = useForm({
     resolver: zodResolver(signupSchema),
-    defaultValues: { email: '', password: '', confirmPassword: '', adminToken: '', clientId: '' }
+    defaultValues: { email: '', password: '', confirmPassword: '', adminToken: '', orgName: '' }
   });
 
   const handleLogin = async (data: any) => {
@@ -86,15 +86,15 @@ export default function Auth() {
       const { data: provisionData, error: provisionError } = await supabase
         .rpc('provision_user', {
           p_user_id: userData.user.id,
-          p_org_name: null,
-          p_join_org_id: data.clientId,
-          p_role: 'agent'
+          p_org_name: data.orgName,
+          p_join_org_id: null,
+          p_role: 'owner'
         });
 
       if (provisionError) {
         console.error('Erro ao provisionar:', provisionError);
-        signupForm.setError('clientId', { 
-          message: 'Client ID inválido ou erro ao associar organização' 
+        signupForm.setError('orgName', { 
+          message: 'Erro ao criar organização' 
         });
         setIsLoading(false);
         return;
@@ -103,7 +103,7 @@ export default function Auth() {
       const organizationId = provisionData?.[0]?.organization_id;
       
       if (!organizationId) {
-        signupForm.setError('clientId', { message: 'Organização não encontrada' });
+        signupForm.setError('orgName', { message: 'Erro ao criar organização' });
         setIsLoading(false);
         return;
       }
@@ -243,16 +243,16 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="client-id" className="text-textc">Client ID</Label>
+                  <Label htmlFor="org-name" className="text-textc">Nome da Organização</Label>
                   <Input
-                    id="client-id"
+                    id="org-name"
                     type="text"
-                    placeholder="UUID da organização"
-                    {...signupForm.register('clientId')}
+                    placeholder="Nome da sua empresa"
+                    {...signupForm.register('orgName')}
                     className="bg-bg2 border-borderc text-textc"
                   />
-                  {signupForm.formState.errors.clientId && (
-                    <p className="text-sm text-destructive">{signupForm.formState.errors.clientId.message}</p>
+                  {signupForm.formState.errors.orgName && (
+                    <p className="text-sm text-destructive">{signupForm.formState.errors.orgName.message}</p>
                   )}
                 </div>
 

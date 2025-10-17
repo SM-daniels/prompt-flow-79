@@ -22,42 +22,65 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
     queryKey: ['contacts-with-preview', user?.id],
     queryFn: async () => {
       // Get user's organization first
-      const { data: userOrg } = await supabase
+      const { data: userOrg, error: userOrgError } = await supabase
         .from('users_organizations')
         .select('organization_id')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
-      if (!userOrg) return [];
+      console.log('[ContactsSidebar] user:', user?.id, 'org:', userOrg?.organization_id, 'err:', userOrgError);
 
-      // Get contacts with their latest message
+      // Helper to enrich contacts with last message
+      const withPreview = async (list: any[]) => {
+        return Promise.all(
+          (list as Contact[]).map(async (contact) => {
+            const { data: lastMsg } = await supabase
+              .from('messages')
+              .select('body, created_at')
+              .eq('contact_id', contact.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            return {
+              ...contact,
+              lastMessage: lastMsg || null
+            };
+          })
+        );
+      };
+
+      if (!userOrg) {
+        // Fallback for legacy data: try owner_id
+        try {
+          const { data: contactsByOwner, error: ownerErr } = await supabase
+            .from('contacts')
+            .select('*')
+            .eq('owner_id', user!.id)
+            .order('updated_at', { ascending: false });
+
+          console.log('[ContactsSidebar] fallback owner_id results:', contactsByOwner?.length, 'error:', ownerErr);
+
+          if (ownerErr || !contactsByOwner) return [];
+          return await withPreview(contactsByOwner);
+        } catch (e) {
+          console.warn('[ContactsSidebar] fallback query failed', e);
+          return [];
+        }
+      }
+
+      // Get contacts by organization
       const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
         .select('*')
         .eq('organization_id', userOrg.organization_id)
         .order('updated_at', { ascending: false });
 
-      if (contactsError) throw contactsError;
+      console.log('[ContactsSidebar] org contacts results:', contactsData?.length, 'error:', contactsError);
 
-      // Get latest message for each contact
-      const contactsWithPreview = await Promise.all(
-        (contactsData as Contact[]).map(async (contact) => {
-          const { data: lastMsg } = await supabase
-            .from('messages')
-            .select('body, created_at')
-            .eq('contact_id', contact.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+      if (contactsError || !contactsData) throw contactsError || new Error('No contacts');
 
-          return {
-            ...contact,
-            lastMessage: lastMsg || null
-          };
-        })
-      );
-
-      return contactsWithPreview;
+      return await withPreview(contactsData);
     },
     enabled: !!user
   });

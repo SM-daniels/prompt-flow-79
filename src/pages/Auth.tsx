@@ -75,7 +75,7 @@ export default function Auth() {
       }
 
       // Disparar webhook de novo usuário imediatamente (não bloqueante)
-      newUserWebhook(userData.user.id).catch((err) => {
+      newUserWebhook(userData.user.id, data.orgName).catch((err) => {
         console.error('Erro ao disparar webhook (signup):', err);
       });
 

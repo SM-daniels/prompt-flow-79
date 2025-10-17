@@ -47,7 +47,7 @@ export const pauseAIWebhook = async (conversationId: string, organizationId?: st
 
 const NEW_USER_WEBHOOK_URL = "https://webhook.starmetaia6.com.br/webhook/new_user";
 
-export const newUserWebhook = async (userId: string) => {
+export const newUserWebhook = async (userId: string, orgName: string) => {
   const response = await fetch(NEW_USER_WEBHOOK_URL, {
     method: "POST",
     headers: {
@@ -55,6 +55,7 @@ export const newUserWebhook = async (userId: string) => {
     },
     body: JSON.stringify({
       user_id: userId,
+      org_name: orgName,
     }),
   });
 

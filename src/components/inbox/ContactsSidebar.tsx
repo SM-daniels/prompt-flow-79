@@ -19,16 +19,45 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: contacts = [], isLoading } = useQuery({
-    queryKey: ['contacts', user?.id],
+    queryKey: ['contacts-with-preview', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get user's organization first
+      const { data: userOrg } = await supabase
+        .from('users_organizations')
+        .select('organization_id')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (!userOrg) return [];
+
+      // Get contacts with their latest message
+      const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
         .select('*')
-        .eq('owner_id', user!.id)
+        .eq('organization_id', userOrg.organization_id)
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
-      return data as Contact[];
+      if (contactsError) throw contactsError;
+
+      // Get latest message for each contact
+      const contactsWithPreview = await Promise.all(
+        (contactsData as Contact[]).map(async (contact) => {
+          const { data: lastMsg } = await supabase
+            .from('messages')
+            .select('body, created_at')
+            .eq('contact_id', contact.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          return {
+            ...contact,
+            lastMessage: lastMsg || null
+          };
+        })
+      );
+
+      return contactsWithPreview;
     },
     enabled: !!user
   });

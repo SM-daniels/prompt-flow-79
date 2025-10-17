@@ -8,7 +8,9 @@ export const loginSchema = z.object({
 export const signupSchema = z.object({
   email: z.string().trim().email({ message: 'Email inválido' }),
   password: z.string().min(6, { message: 'Senha deve ter no mínimo 6 caracteres' }),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  adminToken: z.string().min(1, { message: 'Admin token é obrigatório' }),
+  clientId: z.string().uuid({ message: 'Client ID deve ser um UUID válido' })
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As senhas não coincidem',
   path: ['confirmPassword']

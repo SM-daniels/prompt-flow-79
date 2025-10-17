@@ -28,11 +28,20 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
     setIsSending(true);
 
     try {
+      // Get user's organization
+      const { data: userOrg } = await supabase
+        .from('users_organizations')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userOrg) throw new Error('Organização não encontrada');
+
       // Insert message with queued status
       const { data: newMessage, error: insertError } = await supabase
         .from('messages')
         .insert({
-          owner_id: user.id,
+          organization_id: userOrg.organization_id,
           conversation_id: conversationId,
           contact_id: contactId,
           direction: 'outbound',
@@ -45,22 +54,26 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
       if (insertError) throw insertError;
 
       // Call webhook
-      await sendMessageWebhook({
+      const response = await sendMessageWebhook({
+        organization_id: userOrg.organization_id,
         contact_id: contactId,
         conversation_id: conversationId,
         text: text.trim(),
         metadata: { channel: 'site' }
       });
 
-      // Update status to sent
+      // Update status and MIG
       await supabase
         .from('messages')
-        .update({ status: 'sent' })
+        .update({ 
+          status: response.status || 'sent',
+          mig: response.mig || null
+        })
         .eq('id', newMessage.id);
 
       setText('');
-      // Removed success toast as per requirements
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['contacts-with-preview'] });
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -78,11 +91,20 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
     setIsPausing(true);
 
     try {
+      // Get user's organization
+      const { data: userOrg } = await supabase
+        .from('users_organizations')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userOrg) throw new Error('Organização não encontrada');
+
       // Calculate pause until (30 minutes from now)
       const pausedAt = new Date();
       const pausedUntil = new Date(pausedAt.getTime() + 30 * 60 * 1000);
 
-      await pauseAIWebhook(conversationId);
+      await pauseAIWebhook(conversationId, userOrg.organization_id);
 
       // Update conversation with pause timestamps
       await supabase
@@ -100,7 +122,7 @@ export default function MessageComposer({ conversationId, contactId }: MessageCo
       });
 
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['latest-conversation'] });
     } catch (error: any) {
       toast({
         variant: 'destructive',

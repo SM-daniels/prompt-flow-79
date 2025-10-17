@@ -11,15 +11,37 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { parseChat } from '@/lib/chatParser';
 
 type MessagesThreadProps = {
-  conversationId: string | null;
   contactId: string | null;
 };
 
-export default function MessagesThread({ conversationId, contactId }: MessagesThreadProps) {
+export default function MessagesThread({ contactId }: MessagesThreadProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Fetch the latest conversation for this contact
+  const { data: conversation } = useQuery({
+    queryKey: ['latest-conversation', contactId],
+    queryFn: async () => {
+      if (!contactId) return null;
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('contact_id', contactId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!contactId && !!user
+  });
+
+  const conversationId = conversation?.id || null;
+
+  // Fetch messages
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['messages', conversationId, user?.id],
     queryFn: async () => {
@@ -28,7 +50,6 @@ export default function MessagesThread({ conversationId, contactId }: MessagesTh
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('owner_id', user!.id)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -70,13 +91,13 @@ export default function MessagesThread({ conversationId, contactId }: MessagesTh
     }
   }, [messages]);
 
-  if (!conversationId) {
+  if (!contactId) {
     return (
       <div className="h-full">
         <EmptyState
           icon={MessageSquare}
-          title="Selecione uma conversa"
-          description="Escolha uma conversa para ver as mensagens"
+          title="Selecione um contato"
+          description="Escolha um contato para ver as mensagens"
         />
       </div>
     );

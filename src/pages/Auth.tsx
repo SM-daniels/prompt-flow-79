@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, signupSchema } from '@/lib/validations';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,7 +29,7 @@ export default function Auth() {
 
   const signupForm = useForm({
     resolver: zodResolver(signupSchema),
-    defaultValues: { email: '', password: '', confirmPassword: '' }
+    defaultValues: { email: '', password: '', confirmPassword: '', adminToken: '', clientId: '' }
   });
 
   const handleLogin = async (data: any) => {
@@ -43,12 +44,36 @@ export default function Auth() {
 
   const handleSignup = async (data: any) => {
     setIsLoading(true);
-    const { error } = await signUp(data.email, data.password);
-    setIsLoading(false);
     
-    if (!error) {
-      signupForm.reset();
+    // Validate admin token (hardcoded for now - should be env var)
+    const ADMIN_TOKEN = 'admin123';
+    if (data.adminToken !== ADMIN_TOKEN) {
+      signupForm.setError('adminToken', { message: 'Admin token inválido' });
+      setIsLoading(false);
+      return;
     }
+
+    // Create user account
+    const { error, data: userData } = await signUp(data.email, data.password);
+    
+    if (!error && userData.user) {
+      // Associate user with organization (client_id)
+      const { error: orgError } = await supabase
+        .from('users_organizations')
+        .insert({
+          user_id: userData.user.id,
+          organization_id: data.clientId,
+          role: 'agent'
+        });
+
+      if (orgError) {
+        signupForm.setError('clientId', { message: 'Client ID inválido ou erro ao associar' });
+      } else {
+        signupForm.reset();
+      }
+    }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -141,6 +166,34 @@ export default function Auth() {
                   />
                   {signupForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="admin-token" className="text-textc">Admin Token</Label>
+                  <Input
+                    id="admin-token"
+                    type="password"
+                    placeholder="Token de administrador"
+                    {...signupForm.register('adminToken')}
+                    className="bg-bg2 border-borderc text-textc"
+                  />
+                  {signupForm.formState.errors.adminToken && (
+                    <p className="text-sm text-destructive">{signupForm.formState.errors.adminToken.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="client-id" className="text-textc">Client ID</Label>
+                  <Input
+                    id="client-id"
+                    type="text"
+                    placeholder="UUID da organização"
+                    {...signupForm.register('clientId')}
+                    className="bg-bg2 border-borderc text-textc"
+                  />
+                  {signupForm.formState.errors.clientId && (
+                    <p className="text-sm text-destructive">{signupForm.formState.errors.clientId.message}</p>
                   )}
                 </div>
 

@@ -3,7 +3,7 @@ import { formatRelative } from '@/lib/dateUtils';
 import { Hash, Phone, Mail } from 'lucide-react';
 
 type ContactCardProps = {
-  contact: Contact;
+  contact: Contact & { lastMessage?: { body: string; created_at: string } | null };
   isSelected: boolean;
   onClick: () => void;
 };
@@ -55,13 +55,20 @@ export default function ContactCard({ contact, isSelected, onClick }: ContactCar
             </div>
           </div>
           
-          <p className="text-xs text-textdim truncate">
-            {contact.phone || contact.email || 'Sem informações'}
-          </p>
-          
-          <p className="text-xs text-textdim mt-1">
-            {formatRelative(contact.updated_at)}
-          </p>
+          {contact.lastMessage ? (
+            <>
+              <p className="text-sm text-textdim truncate mb-1">
+                {contact.lastMessage.body || 'Mídia'}
+              </p>
+              <p className="text-xs text-textdim">
+                {formatRelative(contact.lastMessage.created_at)}
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-textdim">
+              Sem mensagens
+            </p>
+          )}
         </div>
       </div>
     </button>

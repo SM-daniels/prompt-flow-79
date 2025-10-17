@@ -2,6 +2,7 @@ const WEBHOOK_SEND_URL = 'https://n8n.starmetaia6.com.br/webhook-test/legacy_sen
 const WEBHOOK_PAUSE_URL = 'https://webhook.starmetaia6.com.br/webhook/legacy_pause';
 
 export const sendMessageWebhook = async (payload: {
+  organization_id: string;
   contact_id: string;
   conversation_id: string;
   text: string;

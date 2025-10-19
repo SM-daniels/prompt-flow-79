@@ -143,7 +143,12 @@ export default function MessageComposer({ conversationId, contactId, conversatio
       const pausedAt = new Date();
       const pausedUntil = new Date(pausedAt.getTime() + 30 * 60 * 1000);
 
-      await pauseAIWebhook(conversationId, userOrg.organization_id);
+      // Try webhook (best-effort, don't block on failure)
+      try {
+        await pauseAIWebhook(conversationId, userOrg.organization_id);
+      } catch (webhookError) {
+        console.warn('Webhook de pausa falhou, mas continuando com pausa local:', webhookError);
+      }
 
       // Update conversation with pause timestamps
       await supabase

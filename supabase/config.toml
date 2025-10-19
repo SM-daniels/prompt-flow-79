@@ -4,7 +4,7 @@ project_id = "upllwofomoktxnuaffee"
 verify_jwt = false
 
 [functions.relay-pause-ai]
-verify_jwt = true
+verify_jwt = false
 
 [functions.relay-send-message]
-verify_jwt = true
+verify_jwt = false

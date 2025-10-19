@@ -165,20 +165,24 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
       // Check if message has chat field
       if (msg.chat) {
         const chatMessages = parseChat(msg.chat);
-        return chatMessages.map((chatMsg, idx) => (
-          <MessageBubble
-            key={`${msg.id}-${idx}`}
-            message={{
-              type: chatMsg.type,
-              content: chatMsg.content,
-              createdAt: chatMsg.createdAt,
-              direction: chatMsg.type === 'human' ? 'inbound' : 'outbound'
-            }}
-          />
-        ));
+        // If chat parsing succeeded and returned messages, use those
+        if (chatMessages.length > 0) {
+          return chatMessages.map((chatMsg, idx) => (
+            <MessageBubble
+              key={`${msg.id}-${idx}`}
+              message={{
+                type: chatMsg.type,
+                content: chatMsg.content,
+                createdAt: chatMsg.createdAt,
+                direction: chatMsg.type === 'human' ? 'inbound' : 'outbound'
+              }}
+            />
+          ));
+        }
+        // If chat parsing failed, fall through to render regular message
       }
 
-      // Regular message
+      // Regular message (or fallback when chat parsing fails)
       return (
         <MessageBubble
           key={msg.id}

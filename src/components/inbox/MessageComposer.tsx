@@ -130,27 +130,36 @@ export default function MessageComposer({ conversationId, contactId, conversatio
     setIsPausing(true);
 
     try {
-      // Get user's organization
-      const { data: userOrg } = await supabase
-        .from('users_organizations')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // 1) Resolver organization_id rapidamente (primeiro via conversation)
+      let orgId: string | undefined = conversation?.organization_id as string | undefined;
 
-      if (!userOrg) throw new Error('Organização não encontrada');
+      if (!orgId) {
+        const { data: userOrg } = await supabase
+          .from('users_organizations')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        orgId = userOrg?.organization_id || orgId;
+      }
 
-      // Calculate pause until (30 minutes from now)
+      if (!orgId && contactId) {
+        const { data: contactRow } = await supabase
+          .from('contacts')
+          .select('organization_id')
+          .eq('id', contactId)
+          .maybeSingle();
+        orgId = contactRow?.organization_id || orgId;
+      }
+
+      if (!orgId) throw new Error('Organização não encontrada');
+
+      // 2) PRIMEIRA AÇÃO: disparar o webhook para pausar a IA
+      await pauseAIWebhook(conversationId, orgId);
+
+      // 3) Após sucesso do webhook, calcular tempos e atualizar DB
       const pausedAt = new Date();
       const pausedUntil = new Date(pausedAt.getTime() + 30 * 60 * 1000);
 
-      // Try webhook (best-effort, don't block on failure)
-      try {
-        await pauseAIWebhook(conversationId, userOrg.organization_id);
-      } catch (webhookError) {
-        console.warn('Webhook de pausa falhou, mas continuando com pausa local:', webhookError);
-      }
-
-      // Update conversation with pause timestamps
       await supabase
         .from('conversations')
         .update({ 

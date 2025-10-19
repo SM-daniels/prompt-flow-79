@@ -67,7 +67,19 @@ export default function MessageComposer({ conversationId, contactId, conversatio
 
       if (!convId) throw new Error('Não foi possível criar a conversa');
 
-      // Insert message with queued status
+      // Fetch highest sequence_id for this conversation
+      const { data: lastMessage } = await supabase
+        .from('messages')
+        .select('sequence_id')
+        .eq('conversation_id', convId)
+        .order('sequence_id', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Calculate next sequence_id
+      const nextSequenceId = (lastMessage?.sequence_id ?? 0) + 1;
+
+      // Insert message with queued status and sequence_id
       const { data: newMessage, error: insertError } = await supabase
         .from('messages')
         .insert({
@@ -77,7 +89,8 @@ export default function MessageComposer({ conversationId, contactId, conversatio
           contact_id: contactId,
           direction: 'outbound',
           body: text.trim(),
-          status: 'queued'
+          status: 'queued',
+          sequence_id: nextSequenceId
         })
         .select()
         .single();

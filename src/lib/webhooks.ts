@@ -29,6 +29,19 @@ export const sendMessageWebhook = async (payload: { message_id: string }) => {
     return isJson ? JSON.parse(text || "{}") : { ok: resp.ok, raw: text };
   } catch (err) {
     console.error("[sendMessageWebhook] direct function call failed:", err);
+    // 3) Last resort: fire-and-forget using sendBeacon (no CORS, opaque)
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+        const blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
+        const sent = navigator.sendBeacon(WEBHOOK_SEND_URL, blob);
+        if (sent) {
+          console.warn("[sendMessageWebhook] Sent via sendBeacon fallback (opaque)");
+          return { ok: true, via: "beacon" } as any;
+        }
+      }
+    } catch (beaconErr) {
+      console.error("[sendMessageWebhook] sendBeacon fallback failed:", beaconErr);
+    }
     throw new Error("Falha ao chamar webhook (todas as tentativas)");
   }
 };
@@ -61,6 +74,21 @@ export const pauseAIWebhook = async (conversationId: string, organizationId?: st
     return isJson ? JSON.parse(text || "{}") : { ok: resp.ok, raw: text };
   } catch (err) {
     console.error("[pauseAIWebhook] direct function call failed:", err);
+    // 3) Last resort: fire-and-forget using sendBeacon (no CORS, opaque)
+    try {
+      if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+        const blob = new Blob([JSON.stringify({ conversation_id: conversationId, organization_id: organizationId })], {
+          type: "text/plain",
+        });
+        const sent = navigator.sendBeacon(WEBHOOK_PAUSE_URL, blob);
+        if (sent) {
+          console.warn("[pauseAIWebhook] Sent via sendBeacon fallback (opaque)");
+          return { ok: true, via: "beacon" } as any;
+        }
+      }
+    } catch (beaconErr) {
+      console.error("[pauseAIWebhook] sendBeacon fallback failed:", beaconErr);
+    }
     throw new Error("Falha ao pausar via webhook (todas as tentativas)");
   }
 };

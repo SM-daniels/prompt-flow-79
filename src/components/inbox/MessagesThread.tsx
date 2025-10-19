@@ -174,7 +174,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
                 type: chatMsg.type,
                 content: chatMsg.content,
                 createdAt: chatMsg.createdAt,
-                direction: chatMsg.type === 'human' ? 'inbound' : 'outbound'
+                direction: msg.direction
               }}
             />
           ));

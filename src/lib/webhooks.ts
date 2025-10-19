@@ -5,22 +5,64 @@ const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/pause";
 const WEBHOOK_NEW_USER_URL = "https://webhook.starmetaia6.com.br/webhook/new-user";
 
 export const sendMessageWebhook = async (payload: { message_id: string }) => {
-  const { data, error } = await supabase.functions.invoke("relay-send-message", {
-    body: payload,
-  });
-  if (error) throw new Error(error.message || "Falha ao chamar webhook");
-  return data;
+  // 1) Try via Edge Function (recommended)
+  try {
+    const { data, error } = await supabase.functions.invoke("relay-send-message", {
+      body: payload,
+    });
+    if (!error) return data;
+    console.warn("[sendMessageWebhook] invoke error:", error);
+  } catch (err) {
+    console.warn("[sendMessageWebhook] invoke failed:", err);
+  }
+
+  // 2) Fallback: call function URL directly (avoids auth header CORS)
+  try {
+    const resp = await fetch("https://upllwofomoktxnuaffee.functions.supabase.co/relay-send-message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      mode: "cors",
+    });
+    const text = await resp.text();
+    const isJson = (resp.headers.get("content-type") || "").includes("application/json");
+    return isJson ? JSON.parse(text || "{}") : { ok: resp.ok, raw: text };
+  } catch (err) {
+    console.error("[sendMessageWebhook] direct function call failed:", err);
+    throw new Error("Falha ao chamar webhook (todas as tentativas)");
+  }
 };
 
 export const pauseAIWebhook = async (conversationId: string, organizationId?: string) => {
-  const { data, error } = await supabase.functions.invoke("relay-pause-ai", {
-    body: {
-      conversation_id: conversationId,
-      organization_id: organizationId,
-    },
-  });
-  if (error) throw new Error(error.message || "Falha ao pausar via webhook");
-  return data;
+  // 1) Try via Edge Function
+  try {
+    const { data, error } = await supabase.functions.invoke("relay-pause-ai", {
+      body: {
+        conversation_id: conversationId,
+        organization_id: organizationId,
+      },
+    });
+    if (!error) return data;
+    console.warn("[pauseAIWebhook] invoke error:", error);
+  } catch (err) {
+    console.warn("[pauseAIWebhook] invoke failed:", err);
+  }
+
+  // 2) Fallback: call function URL directly (no auth header)
+  try {
+    const resp = await fetch("https://upllwofomoktxnuaffee.functions.supabase.co/relay-pause-ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversation_id: conversationId, organization_id: organizationId }),
+      mode: "cors",
+    });
+    const text = await resp.text();
+    const isJson = (resp.headers.get("content-type") || "").includes("application/json");
+    return isJson ? JSON.parse(text || "{}") : { ok: resp.ok, raw: text };
+  } catch (err) {
+    console.error("[pauseAIWebhook] direct function call failed:", err);
+    throw new Error("Falha ao pausar via webhook (todas as tentativas)");
+  }
 };
 
 // Send via Edge Function with robust fallbacks to guarantee delivery

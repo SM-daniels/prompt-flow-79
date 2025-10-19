@@ -71,6 +71,7 @@ export default function MessageComposer({ conversationId, contactId, conversatio
       const { data: newMessage, error: insertError } = await supabase
         .from('messages')
         .insert({
+          owner_id: user.id,
           organization_id: orgId,
           conversation_id: convId,
           contact_id: contactId,

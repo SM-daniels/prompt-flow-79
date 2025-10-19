@@ -85,31 +85,22 @@ export default function MessageComposer({ conversationId, contactId, conversatio
       if (insertError) throw insertError;
 
       // Call webhook (best-effort)
-      try {
-        const response = await sendMessageWebhook({
-          organization_id: orgId,
-          contact_id: contactId,
-          conversation_id: convId,
-          text: text.trim(),
-          metadata: { channel: 'site' }
-        });
+      const response = await sendMessageWebhook({
+        organization_id: orgId,
+        contact_id: contactId,
+        conversation_id: convId,
+        text: text.trim(),
+        metadata: { channel: 'site' }
+      });
 
-        // Update status and MIG
-        await supabase
-          .from('messages')
-          .update({
-            status: response.status || 'sent',
-            mig: response.mig || null
-          })
-          .eq('id', newMessage.id);
-      } catch (webhookError) {
-        // Webhook failed, but message was saved - just log and continue
-        console.warn('Webhook failed:', webhookError);
-        await supabase
-          .from('messages')
-          .update({ status: 'sent' })
-          .eq('id', newMessage.id);
-      }
+      // Update status and MIG
+      await supabase
+        .from('messages')
+        .update({
+          status: response.status || 'sent',
+          mig: response.mig || null
+        })
+        .eq('id', newMessage.id);
 
       setText('');
       // Invalidate queries

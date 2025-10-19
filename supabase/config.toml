@@ -1,2 +1,5 @@
 # Supabase Configuration
 project_id = "upllwofomoktxnuaffee"
+
+[functions.new-user-webhook]
+verify_jwt = false

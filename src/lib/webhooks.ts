@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 const WEBHOOK_SEND_URL = "https://webhook.starmetaia6.com.br/webhook/send";
 const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/pause";
 const WEBHOOK_NEW_USER_URL = "https://webhook.starmetaia6.com.br/webhook/new-user";
@@ -46,21 +48,15 @@ export const pauseAIWebhook = async (conversationId: string, organizationId?: st
   return response.json();
 };
 
+// Send via Edge Function to avoid browser CORS/network issues
 export const newUserWebhook = async (userId: string, orgName: string) => {
-  const response = await fetch(WEBHOOK_NEW_USER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      org_name: orgName,
-    }),
+  const { data, error } = await supabase.functions.invoke("new-user-webhook", {
+    body: { user_id: userId, org_name: orgName },
   });
 
-  if (!response.ok) {
-    throw new Error(`Webhook failed: ${response.statusText}`);
+  if (error) {
+    throw new Error(`Webhook failed: ${error.message}`);
   }
 
-  return response.json();
+  return data;
 };

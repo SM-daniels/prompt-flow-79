@@ -1,7 +1,7 @@
-import { createContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { createContext, useEffect, useState, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   user: User | null;
@@ -22,13 +22,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -43,14 +43,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     if (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao fazer login',
-        description: error.message
+        variant: "destructive",
+        title: "Erro ao fazer login",
+        description: error.message,
       });
     }
 
@@ -64,20 +64,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl
-      }
+        emailRedirectTo: redirectUrl,
+      },
     });
 
     if (error) {
       toast({
-        variant: 'destructive',
-        title: 'Erro ao criar conta',
-        description: error.message
+        variant: "destructive",
+        title: "Erro ao criar conta",
+        description: error.message,
       });
     } else {
       toast({
-        title: 'Conta criada!',
-        description: 'Verifique seu email para confirmar a conta (se necessário).'
+        title: "Conta criada!",
+        description: "Seja bem-vindo ao Starmeta Legacy.",
       });
     }
 
@@ -87,14 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     toast({
-      title: 'Logout realizado',
-      description: 'Você saiu da sua conta.'
+      title: "Logout realizado",
+      description: "Você saiu da sua conta.",
     });
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>{children}</AuthContext.Provider>
   );
 };

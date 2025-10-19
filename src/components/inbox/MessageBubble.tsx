@@ -10,7 +10,7 @@ type MessageBubbleProps = {
 };
 
 export default function MessageBubble({ message }: MessageBubbleProps) {
-  const isFromUser = message.type === 'human' || message.direction === 'inbound';
+  const isFromUser = message.direction === 'inbound';
 
   return (
     <div className={`flex ${isFromUser ? 'justify-start' : 'justify-end'}`}>

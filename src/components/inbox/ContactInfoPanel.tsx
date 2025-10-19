@@ -82,15 +82,6 @@ export default function ContactInfoPanel({ contactId }: ContactInfoPanelProps) {
               </div>
             )}
 
-            {contact.email && (
-              <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-xs text-textdim mb-1">Email</p>
-                  <p className="text-sm text-textc break-all">{contact.email}</p>
-                </div>
-              </div>
-            )}
 
             <div className="flex items-start gap-3">
               <Hash className="w-5 h-5 text-primary mt-0.5" />

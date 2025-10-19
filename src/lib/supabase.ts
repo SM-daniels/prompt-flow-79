@@ -37,6 +37,7 @@ export type Message = {
   media?: any[];
   interpretations?: any;
   chat?: string;
+  sequence_id?: number;
   created_at: string;
   updated_at: string;
 };

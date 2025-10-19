@@ -85,12 +85,17 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
     queryFn: async () => {
       if (!user || (!conversationId && !contactId)) return [];
 
-      let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
+      let query = supabase.from('messages').select('*');
       if (conversationId) {
         query = query.eq('conversation_id', conversationId);
       } else if (contactId) {
         query = query.eq('contact_id', contactId);
       }
+      
+      // Order by sequence_id if available, otherwise by created_at
+      query = query.order('sequence_id', { ascending: true, nullsFirst: false })
+                   .order('created_at', { ascending: true });
+      
       const { data, error } = await query;
       if (error) throw error;
       return data as Message[];
@@ -169,7 +174,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
         if (chatMessages.length > 0) {
           return chatMessages.map((chatMsg, idx) => (
             <MessageBubble
-              key={`${msg.id}-${idx}`}
+              key={`${msg.sequence_id || msg.id}-${idx}`}
               message={{
                 type: chatMsg.type,
                 content: chatMsg.content,
@@ -185,7 +190,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
       // Regular message (or fallback when chat parsing fails)
       return (
         <MessageBubble
-          key={msg.id}
+          key={msg.sequence_id || msg.id}
           message={{
             type: msg.direction === 'inbound' ? 'human' : 'ai',
             content: msg.body || '',

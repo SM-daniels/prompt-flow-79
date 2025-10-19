@@ -5,11 +5,7 @@ const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/pause";
 const WEBHOOK_NEW_USER_URL = "https://webhook.starmetaia6.com.br/webhook/new-user";
 
 export const sendMessageWebhook = async (payload: {
-  organization_id: string;
-  contact_id: string;
-  conversation_id: string;
-  text: string;
-  metadata?: any;
+  message_id: string;
 }) => {
   const response = await fetch(WEBHOOK_SEND_URL, {
     method: "POST",

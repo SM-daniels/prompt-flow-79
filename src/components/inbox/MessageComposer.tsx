@@ -97,13 +97,9 @@ export default function MessageComposer({ conversationId, contactId, conversatio
 
       if (insertError) throw insertError;
 
-      // Call webhook (best-effort)
+      // Call webhook with message_id only
       const response = await sendMessageWebhook({
-        organization_id: orgId,
-        contact_id: contactId,
-        conversation_id: convId,
-        text: text.trim(),
-        metadata: { channel: 'site' }
+        message_id: newMessage.id
       });
 
       // Update status and MIG

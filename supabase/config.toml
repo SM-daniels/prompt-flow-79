@@ -1,5 +1,10 @@
-# Supabase Configuration
 project_id = "upllwofomoktxnuaffee"
 
 [functions.new-user-webhook]
 verify_jwt = false
+
+[functions.relay-pause-ai]
+verify_jwt = true
+
+[functions.relay-send-message]
+verify_jwt = true

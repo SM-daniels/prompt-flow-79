@@ -4,44 +4,23 @@ const WEBHOOK_SEND_URL = "https://webhook.starmetaia6.com.br/webhook/send";
 const WEBHOOK_PAUSE_URL = "https://webhook.starmetaia6.com.br/webhook/pause";
 const WEBHOOK_NEW_USER_URL = "https://webhook.starmetaia6.com.br/webhook/new-user";
 
-export const sendMessageWebhook = async (payload: {
-  message_id: string;
-}) => {
-  const response = await fetch(WEBHOOK_SEND_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
+export const sendMessageWebhook = async (payload: { message_id: string }) => {
+  const { data, error } = await supabase.functions.invoke("relay-send-message", {
+    body: payload,
   });
-
-  if (!response.ok) {
-    throw new Error(`Webhook failed: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error(error.message || "Falha ao chamar webhook");
+  return data;
 };
 
 export const pauseAIWebhook = async (conversationId: string, organizationId?: string) => {
-  const response = await fetch(WEBHOOK_PAUSE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      organization_id: organizationId,
+  const { data, error } = await supabase.functions.invoke("relay-pause-ai", {
+    body: {
       conversation_id: conversationId,
-      paused: true,
-      duration_minutes: 30,
-      reason: "manual",
-    }),
+      organization_id: organizationId,
+    },
   });
-
-  if (!response.ok) {
-    throw new Error(`Webhook failed: ${response.statusText}`);
-  }
-
-  return response.json();
+  if (error) throw new Error(error.message || "Falha ao pausar via webhook");
+  return data;
 };
 
 // Send via Edge Function with robust fallbacks to guarantee delivery

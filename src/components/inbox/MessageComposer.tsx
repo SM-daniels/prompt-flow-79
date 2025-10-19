@@ -103,10 +103,7 @@ export default function MessageComposer({ conversationId, contactId, conversatio
         .eq('id', newMessage.id);
 
       setText('');
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
-      queryClient.invalidateQueries({ queryKey: ['latest-conversation', contactId] });
-      queryClient.invalidateQueries({ queryKey: ['contacts-with-preview'] });
+      // Realtime subscription will handle the update
     } catch (error: any) {
       toast({
         variant: 'destructive',

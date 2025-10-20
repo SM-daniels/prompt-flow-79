@@ -77,7 +77,8 @@ export default {
         glowMd: "var(--glow-md)",
       },
       fontFamily: {
-        sans: ['Cairo', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['Cairo', 'system-ui', '-apple-system', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import ContactsSidebar from "@/components/inbox/ContactsSidebar";
 import MessagesThread from "@/components/inbox/MessagesThread";
 import ContactInfoPanel from "@/components/inbox/ContactInfoPanel";
+import starmetaLogo from "@/assets/starmeta-logo.png";
 
 export default function InboxLayout() {
   const { signOut, user } = useAuth();
@@ -14,7 +15,10 @@ export default function InboxLayout() {
     <div className="flex h-screen bg-bg0">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-bg1 border-b border-borderc z-10 flex items-center justify-between px-6">
-        <h1 className="text-xl font-bold text-textc">Legacy</h1>
+        <div className="flex items-center gap-3">
+          <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
+          <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-textdim">{user?.email}</span>
           <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">

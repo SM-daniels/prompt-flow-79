@@ -55,8 +55,8 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
                   <source src={item.url} type={item.mime_type} />
                   Seu navegador não suporta áudio.
                 </audio>
-                <p className="text-xs opacity-70">
-                  {item.name} • {formatSize(item.size)}
+                <p className="text-xs opacity-60">
+                  {formatSize(item.size)}
                 </p>
               </div>
             );
@@ -73,8 +73,8 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
                   <source src={item.url} type={item.mime_type} />
                   Seu navegador não suporta vídeo.
                 </video>
-                <p className="text-xs opacity-70">
-                  {item.name} • {formatSize(item.size)}
+                <p className="text-xs opacity-60">
+                  {formatSize(item.size)}
                 </p>
               </div>
             );
@@ -83,17 +83,14 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/10 hover:bg-white/15 transition-colors cursor-pointer max-w-sm"
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer max-w-sm border border-border"
                 onClick={() => window.open(item.url, '_blank')}
               >
-                <FileText className="w-8 h-8 flex-shrink-0" />
+                <FileText className="w-8 h-8 flex-shrink-0 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {item.name}
-                  </p>
-                  <p className="text-xs opacity-70">{formatSize(item.size)}</p>
+                  <p className="text-xs opacity-60">{formatSize(item.size)}</p>
                 </div>
-                <Download className="w-4 h-4 flex-shrink-0" />
+                <Download className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
               </div>
             );
 

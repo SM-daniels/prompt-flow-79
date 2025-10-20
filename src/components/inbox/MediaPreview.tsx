@@ -12,9 +12,10 @@ export interface MediaItem {
 
 type MediaPreviewProps = {
   media: MediaItem[];
+  variant?: 'inbound' | 'outbound';
 };
 
-export default function MediaPreview({ media }: MediaPreviewProps) {
+export default function MediaPreview({ media, variant = 'inbound' }: MediaPreviewProps) {
   if (!media || media.length === 0) {
     console.log('[MediaPreview] No media to display');
     return null;
@@ -46,7 +47,7 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
             );
 
           case 'audio':
-            return <AudioPlayer key={item.id} url={item.url} size={item.size} />;
+            return <AudioPlayer key={item.id} url={item.url} size={item.size} variant={variant} />;
 
           case 'video':
             return (

@@ -28,7 +28,10 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
         )}
         {message.media && message.media.length > 0 && (
           <div className={message.content ? 'mt-2' : ''}>
-            <MediaPreview media={message.media} />
+            <MediaPreview 
+              media={message.media} 
+              variant={isFromUser ? 'inbound' : 'outbound'} 
+            />
           </div>
         )}
         <p className={`text-xs mt-2 ${isFromUser ? 'text-textdim' : 'text-white/70'}`}>

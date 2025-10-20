@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 type AudioPlayerProps = {
   url: string;
   size: number;
+  variant?: 'inbound' | 'outbound';
 };
 
-export default function AudioPlayer({ url, size }: AudioPlayerProps) {
+export default function AudioPlayer({ url, size, variant = 'inbound' }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -67,27 +68,41 @@ export default function AudioPlayer({ url, size }: AudioPlayerProps) {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const isOutbound = variant === 'outbound';
+
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border max-w-md w-full">
+    <div className={`flex items-center gap-3 p-4 rounded-lg max-w-md w-full ${
+      isOutbound 
+        ? 'bg-white/10 border border-white/20' 
+        : 'bg-muted/30 border border-border'
+    }`}>
       <audio ref={audioRef} src={url} preload="metadata" />
       
       <Button
         variant="ghost"
         size="icon"
-        className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20"
+        className={`h-10 w-10 rounded-full ${
+          isOutbound
+            ? 'bg-white/20 hover:bg-white/30'
+            : 'bg-primary/10 hover:bg-primary/20'
+        }`}
         onClick={togglePlayPause}
       >
         {isPlaying ? (
-          <Pause className="h-5 w-5 text-primary" />
+          <Pause className={`h-5 w-5 ${isOutbound ? 'text-white' : 'text-primary'}`} />
         ) : (
-          <Play className="h-5 w-5 text-primary ml-0.5" />
+          <Play className={`h-5 w-5 ml-0.5 ${isOutbound ? 'text-white' : 'text-primary'}`} />
         )}
       </Button>
 
       <div className="flex-1 space-y-2">
-        <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className={`relative h-1.5 rounded-full overflow-hidden ${
+          isOutbound ? 'bg-white/20' : 'bg-muted'
+        }`}>
           <div
-            className="absolute top-0 left-0 h-full bg-primary transition-all duration-100"
+            className={`absolute top-0 left-0 h-full transition-all duration-100 ${
+              isOutbound ? 'bg-white' : 'bg-primary'
+            }`}
             style={{ width: `${progress}%` }}
           />
           <input
@@ -101,10 +116,10 @@ export default function AudioPlayer({ url, size }: AudioPlayerProps) {
         </div>
         
         <div className="flex items-center justify-between text-xs gap-4">
-          <span className="text-muted-foreground">
+          <span className={isOutbound ? 'text-white/80' : 'text-muted-foreground'}>
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
-          <span className="text-muted-foreground opacity-60">
+          <span className={isOutbound ? 'text-white/60' : 'text-muted-foreground opacity-60'}>
             {formatSize(size)}
           </span>
         </div>

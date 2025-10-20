@@ -1,4 +1,5 @@
 import { FileText, Download } from 'lucide-react';
+import AudioPlayer from './AudioPlayer';
 
 export interface MediaItem {
   id: string;
@@ -45,21 +46,7 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
             );
 
           case 'audio':
-            return (
-              <div key={item.id} className="w-full max-w-sm space-y-1">
-                <audio
-                  controls
-                  className="w-full rounded"
-                  preload="metadata"
-                >
-                  <source src={item.url} type={item.mime_type} />
-                  Seu navegador não suporta áudio.
-                </audio>
-                <p className="text-xs opacity-60">
-                  {formatSize(item.size)}
-                </p>
-              </div>
-            );
+            return <AudioPlayer key={item.id} url={item.url} size={item.size} />;
 
           case 'video':
             return (

@@ -1,4 +1,4 @@
-import { formatRelative } from '@/lib/dateUtils';
+import { formatTimestamp } from '@/lib/dateUtils';
 import MediaPreview, { type MediaItem } from './MediaPreview';
 
 type MessageBubbleProps = {
@@ -32,7 +32,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           </div>
         )}
         <p className={`text-xs mt-2 ${isFromUser ? 'text-textdim' : 'text-white/70'}`}>
-          {formatRelative(message.createdAt)}
+          {formatTimestamp(message.createdAt)}
         </p>
       </div>
     </div>

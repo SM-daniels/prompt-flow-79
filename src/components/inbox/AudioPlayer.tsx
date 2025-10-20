@@ -84,7 +84,13 @@ export default function AudioPlayer({ url, size }: AudioPlayerProps) {
         )}
       </Button>
 
-      <div className="flex-1 space-y-1">
+      <div className="flex-1 space-y-1.5">
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span className="text-muted-foreground opacity-60">
+            {formatSize(size)}
+          </span>
+        </div>
+        
         <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
           <div
             className="absolute top-0 left-0 h-full bg-primary transition-all duration-100"
@@ -103,9 +109,6 @@ export default function AudioPlayer({ url, size }: AudioPlayerProps) {
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
             {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
-          <span className="text-muted-foreground opacity-60">
-            {formatSize(size)}
           </span>
         </div>
       </div>

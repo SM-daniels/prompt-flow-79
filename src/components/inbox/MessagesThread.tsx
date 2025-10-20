@@ -179,7 +179,8 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
                 type: chatMsg.type,
                 content: chatMsg.content,
                 createdAt: chatMsg.createdAt,
-                direction: msg.direction
+                direction: msg.direction,
+                media: msg.media
               }}
             />
           ));
@@ -195,7 +196,8 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
             type: msg.direction === 'inbound' ? 'human' : 'ai',
             content: msg.body || '',
             createdAt: msg.created_at,
-            direction: msg.direction
+            direction: msg.direction,
+            media: msg.media
           }}
         />
       );

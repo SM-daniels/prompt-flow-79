@@ -1,5 +1,4 @@
 import { FileText, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export interface MediaItem {
   id: string;
@@ -24,7 +23,7 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
   };
 
   return (
-    <div className="space-y-2 mt-2">
+    <div className="space-y-3">
       {media.map((item) => {
         switch (item.type) {
           case 'image':
@@ -35,22 +34,23 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
                   alt={item.name}
                   className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => window.open(item.url, '_blank')}
+                  loading="lazy"
                 />
               </div>
             );
 
           case 'audio':
             return (
-              <div key={item.id} className="w-full max-w-sm">
+              <div key={item.id} className="w-full max-w-sm space-y-1">
                 <audio
                   controls
-                  className="w-full"
-                  style={{ height: '40px' }}
+                  className="w-full rounded"
+                  preload="metadata"
                 >
                   <source src={item.url} type={item.mime_type} />
                   Seu navegador não suporta áudio.
                 </audio>
-                <p className="text-xs text-textdim mt-1">
+                <p className="text-xs opacity-70">
                   {item.name} • {formatSize(item.size)}
                 </p>
               </div>
@@ -58,16 +58,17 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
 
           case 'video':
             return (
-              <div key={item.id} className="rounded-lg overflow-hidden max-w-md">
+              <div key={item.id} className="rounded-lg overflow-hidden max-w-md space-y-1">
                 <video
                   controls
-                  className="w-full h-auto"
+                  className="w-full h-auto rounded"
                   style={{ maxHeight: '400px' }}
+                  preload="metadata"
                 >
                   <source src={item.url} type={item.mime_type} />
                   Seu navegador não suporta vídeo.
                 </video>
-                <p className="text-xs text-textdim mt-1">
+                <p className="text-xs opacity-70">
                   {item.name} • {formatSize(item.size)}
                 </p>
               </div>
@@ -77,22 +78,17 @@ export default function MediaPreview({ media }: MediaPreviewProps) {
             return (
               <div
                 key={item.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-bg3 border border-borderc max-w-sm"
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/10 hover:bg-white/15 transition-colors cursor-pointer max-w-sm"
+                onClick={() => window.open(item.url, '_blank')}
               >
-                <FileText className="w-8 h-8 text-primary" />
+                <FileText className="w-8 h-8 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-textc truncate">
+                  <p className="text-sm font-medium truncate">
                     {item.name}
                   </p>
-                  <p className="text-xs text-textdim">{formatSize(item.size)}</p>
+                  <p className="text-xs opacity-70">{formatSize(item.size)}</p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => window.open(item.url, '_blank')}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
+                <Download className="w-4 h-4 flex-shrink-0" />
               </div>
             );
 

@@ -14,7 +14,12 @@ type MediaPreviewProps = {
 };
 
 export default function MediaPreview({ media }: MediaPreviewProps) {
-  if (!media || media.length === 0) return null;
+  if (!media || media.length === 0) {
+    console.log('[MediaPreview] No media to display');
+    return null;
+  }
+
+  console.log('[MediaPreview] Rendering', media.length, 'items:', media.map(m => m.type));
 
   const formatSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;

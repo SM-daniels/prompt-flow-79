@@ -156,9 +156,12 @@ export default function MessageComposer({ conversationId, contactId, conversatio
         })
         .eq('id', newMessage.id);
 
+      // Invalidate queries to show new message immediately
+      queryClient.invalidateQueries({ queryKey: ['messages', `conv-${convId}`] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
       setText('');
       setSelectedFiles([]);
-      // Realtime subscription will handle the update
     } catch (error: any) {
       toast({
         variant: 'destructive',

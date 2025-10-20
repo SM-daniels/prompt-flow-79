@@ -7,6 +7,7 @@ import { MessageSquare } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import MessageBubble from './MessageBubble';
 import MessageComposer from './MessageComposer';
+import type { MediaItem } from './MediaPreview';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseChat } from '@/lib/chatParser';
 
@@ -98,10 +99,34 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
       
       const { data, error } = await query;
       if (error) throw error;
+      console.log('[MessagesThread] Fetched messages:', data?.length, 'first media:', data?.[0]?.media);
       return data as Message[];
     },
     enabled: !!user && (!!conversationId || !!contactId)
   });
+
+  // Helper to safely parse media JSONB field
+  const parseMediaSafely = (media: any): MediaItem[] | undefined => {
+    if (!media) return undefined;
+    
+    // If already an array, return it
+    if (Array.isArray(media)) {
+      return media.length > 0 ? media : undefined;
+    }
+    
+    // If it's a JSON string, try to parse it
+    if (typeof media === 'string') {
+      try {
+        const parsed = JSON.parse(media);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
+      } catch {
+        console.error('[MessagesThread] Failed to parse media JSON:', media);
+        return undefined;
+      }
+    }
+    
+    return undefined;
+  };
 
   // Realtime subscription (supports conv or contact fallback)
   useEffect(() => {
@@ -167,6 +192,13 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
 
   const renderMessages = () => {
     return messages.flatMap((msg) => {
+      console.log('[MessageBubble] Rendering:', {
+        id: msg.id,
+        body: msg.body?.substring(0, 20),
+        media: msg.media,
+        mediaLength: Array.isArray(msg.media) ? msg.media.length : 'not array'
+      });
+
       // Check if message has chat field
       if (msg.chat) {
         const chatMessages = parseChat(msg.chat);
@@ -180,7 +212,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
                 content: chatMsg.content,
                 createdAt: chatMsg.createdAt,
                 direction: msg.direction,
-                media: msg.media
+                media: parseMediaSafely(msg.media)
               }}
             />
           ));
@@ -197,7 +229,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
             content: msg.body || '',
             createdAt: msg.created_at,
             direction: msg.direction,
-            media: msg.media
+            media: parseMediaSafely(msg.media)
           }}
         />
       );

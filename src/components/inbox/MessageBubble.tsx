@@ -1,4 +1,5 @@
 import { formatRelative } from '@/lib/dateUtils';
+import MediaPreview, { type MediaItem } from './MediaPreview';
 
 type MessageBubbleProps = {
   message: {
@@ -6,6 +7,7 @@ type MessageBubbleProps = {
     content: string;
     createdAt: string;
     direction: 'inbound' | 'outbound';
+    media?: MediaItem[];
   };
 };
 
@@ -21,7 +23,12 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             : 'bg-primary text-white shadow-glow'
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+        {message.content && (
+          <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+        )}
+        {message.media && message.media.length > 0 && (
+          <MediaPreview media={message.media} />
+        )}
         <p className={`text-xs mt-2 ${isFromUser ? 'text-textdim' : 'text-white/70'}`}>
           {formatRelative(message.createdAt)}
         </p>

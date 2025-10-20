@@ -5,8 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, PauseCircle, Loader2 } from 'lucide-react';
+import { Send, PauseCircle, Loader2, Paperclip, X } from 'lucide-react';
 import { sendMessageWebhook, pauseAIWebhook } from '@/lib/webhooks';
+import { validateMediaFile } from '@/lib/mediaValidation';
+import { uploadMedia, type MediaItem } from '@/lib/mediaUpload';
 
 type MessageComposerProps = {
   conversationId: string | null;
@@ -21,12 +23,41 @@ export default function MessageComposer({ conversationId, contactId, conversatio
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      const validation = validateMediaFile(file);
+      if (!validation.valid) {
+        toast({
+          variant: 'destructive',
+          title: 'Arquivo inválido',
+          description: validation.error,
+        });
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSend = async () => {
-    if (!text.trim() || !contactId || !user) return;
+    if ((!text.trim() && selectedFiles.length === 0) || !contactId || !user) return;
 
     setIsSending(true);
+    setIsUploading(selectedFiles.length > 0);
 
     try {
       // Try to get user's organization (may not exist in legacy data)
@@ -79,7 +110,20 @@ export default function MessageComposer({ conversationId, contactId, conversatio
       // Calculate next sequence_id
       const nextSequenceId = (lastMessage?.sequence_id ?? 0) + 1;
 
-      // Insert message with queued status and sequence_id
+      // Upload media files if any
+      let mediaItems: MediaItem[] = [];
+      if (selectedFiles.length > 0) {
+        // Create temporary message ID for folder organization
+        const tempMessageId = crypto.randomUUID();
+        
+        const uploadPromises = selectedFiles.map((file) =>
+          uploadMedia(file, orgId, tempMessageId)
+        );
+        
+        mediaItems = await Promise.all(uploadPromises);
+      }
+
+      // Insert message with queued status, sequence_id, and media
       const { data: newMessage, error: insertError } = await supabase
         .from('messages')
         .insert({
@@ -88,7 +132,8 @@ export default function MessageComposer({ conversationId, contactId, conversatio
           conversation_id: convId,
           contact_id: contactId,
           direction: 'outbound',
-          body: text.trim(),
+          body: text.trim() || null,
+          media: mediaItems.length > 0 ? mediaItems : null,
           status: 'queued',
           sequence_id: nextSequenceId
         })
@@ -112,6 +157,7 @@ export default function MessageComposer({ conversationId, contactId, conversatio
         .eq('id', newMessage.id);
 
       setText('');
+      setSelectedFiles([]);
       // Realtime subscription will handle the update
     } catch (error: any) {
       toast({
@@ -121,6 +167,7 @@ export default function MessageComposer({ conversationId, contactId, conversatio
       });
     } finally {
       setIsSending(false);
+      setIsUploading(false);
     }
   };
 
@@ -206,6 +253,27 @@ export default function MessageComposer({ conversationId, contactId, conversatio
         disabled={!contactId || isSending}
       />
 
+      {selectedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedFiles.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 px-3 py-2 bg-bg3 border border-borderc rounded-lg"
+            >
+              <span className="text-sm text-textc truncate max-w-[200px]">
+                {file.name}
+              </span>
+              <button
+                onClick={() => removeFile(index)}
+                className="text-textdim hover:text-destructive transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
           <Button
@@ -233,18 +301,42 @@ export default function MessageComposer({ conversationId, contactId, conversatio
           )}
         </div>
 
-        <Button
-          onClick={handleSend}
-          disabled={!text.trim() || !contactId || isSending}
-          className="btn-primary"
-        >
-          {isSending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4 mr-2" />
-          )}
-          Enviar
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,audio/*,video/*,application/pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending || !contactId}
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
+
+          <Button
+            onClick={handleSend}
+            disabled={(!text.trim() && selectedFiles.length === 0) || !contactId || isSending}
+            className="btn-primary"
+          >
+            {isSending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {isUploading ? 'Enviando...' : 'Enviando...'}
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Enviar
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

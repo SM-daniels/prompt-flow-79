@@ -100,7 +100,7 @@ export default function AudioPlayer({ url, size }: AudioPlayerProps) {
           />
         </div>
         
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs gap-4">
           <span className="text-muted-foreground">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>

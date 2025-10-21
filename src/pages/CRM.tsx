@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Contact } from "@/lib/supabase";
@@ -18,12 +18,15 @@ import starmetaLogo from "@/assets/starmeta-logo.png";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/crm/KanbanColumn";
 import { LeadCard } from "@/components/crm/LeadCard";
+import { ContactsSidebar } from "@/components/crm/ContactsSidebar";
+import { LabelManager, Label } from "@/components/crm/LabelManager";
+import { StageEditor, StageConfig } from "@/components/crm/StageEditor";
 import { toast } from "sonner";
 
 type Stage = 'novo' | 'contato' | 'qualificado' | 'negociacao' | 'convertido' | 'perdido';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'site' | 'outro';
 
-const STAGES: { id: Stage; title: string; color: string }[] = [
+const DEFAULT_STAGES: StageConfig[] = [
   { id: 'novo', title: 'Novo', color: 'bg-blue-500' },
   { id: 'contato', title: 'Contato Inicial', color: 'bg-purple-500' },
   { id: 'qualificado', title: 'Qualificado', color: 'bg-yellow-500' },
@@ -32,6 +35,11 @@ const STAGES: { id: Stage; title: string; color: string }[] = [
   { id: 'perdido', title: 'Perdido', color: 'bg-red-500' },
 ];
 
+const STORAGE_KEYS = {
+  STAGES: 'crm-stages',
+  LABELS: 'crm-labels',
+};
+
 export default function CRM() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
@@ -39,6 +47,27 @@ export default function CRM() {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedContactId, setSelectedContactId] = useState<string>();
+  
+  // Load stages and labels from localStorage
+  const [stages, setStages] = useState<StageConfig[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.STAGES);
+    return stored ? JSON.parse(stored) : DEFAULT_STAGES;
+  });
+  
+  const [labels, setLabels] = useState<Label[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.LABELS);
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  // Save to localStorage when stages/labels change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.STAGES, JSON.stringify(stages));
+  }, [stages]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.LABELS, JSON.stringify(labels));
+  }, [labels]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -88,6 +117,36 @@ export default function CRM() {
       toast.error('Erro ao mover lead');
     },
   });
+
+  const updateContactLabelsMutation = useMutation({
+    mutationFn: async ({ contactId, labelIds }: { contactId: string; labelIds: string[] }) => {
+      const contact = contacts.find(c => c.id === contactId);
+      if (!contact) throw new Error('Contact not found');
+
+      const updatedMetadata = {
+        ...(contact.metadata || {}),
+        labels: labelIds,
+      };
+
+      const { error } = await supabase
+        .from('contacts')
+        .update({ metadata: updatedMetadata })
+        .eq('id', contactId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      toast.success('Etiquetas atualizadas!');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar etiquetas');
+    },
+  });
+
+  const handleLabelsChange = (contactId: string, labelIds: string[]) => {
+    updateContactLabelsMutation.mutate({ contactId, labelIds });
+  };
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
@@ -146,50 +205,65 @@ export default function CRM() {
   const activeContact = activeId ? contacts.find(c => c.id === activeId) : null;
 
   return (
-    <div className="flex flex-col h-screen bg-bg0">
-      {/* Header */}
-      <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/app')}
-              className="text-textdim hover:text-textc"
-            >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Inbox
-            </Button>
-            <Button 
-              variant="secondary"
-              className="text-textc"
-            >
-              CRM
-            </Button>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-textdim">{user?.email}</span>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+    <div className="flex h-screen bg-bg0">
+      {/* Sidebar */}
+      <ContactsSidebar
+        contacts={filteredContacts}
+        selectedContactId={selectedContactId}
+        onSelectContact={setSelectedContactId}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="p-6 space-y-4 shrink-0">
-          {/* Page Header */}
-          <div>
-            <h2 className="text-3xl font-bold text-textc mb-2">CRM - Pipeline de Vendas</h2>
-            <p className="text-textdim">Arraste os contatos entre os estágios do funil</p>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
+              <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/app')}
+                className="text-textdim hover:text-textc"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Inbox
+              </Button>
+              <Button 
+                variant="secondary"
+                className="text-textc"
+              >
+                CRM
+              </Button>
+            </div>
           </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-textdim">{user?.email}</span>
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
-          {/* Filters */}
-          <Card className="p-4">
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-6 space-y-4 shrink-0">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-textc mb-2">CRM - Pipeline de Vendas</h2>
+                <p className="text-textdim">Arraste os contatos entre os estágios do funil</p>
+              </div>
+              <div className="flex gap-2">
+                <LabelManager labels={labels} onLabelsChange={setLabels} />
+                <StageEditor stages={stages} onStagesChange={setStages} />
+              </div>
+            </div>
+
+            {/* Filters */}
+            <Card className="p-4">
             <div className="flex gap-4 items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-textdim" />
@@ -215,48 +289,57 @@ export default function CRM() {
             </div>
           </Card>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            {STAGES.map(stage => (
-              <Card key={stage.id} className="p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                  <div className="text-textdim text-xs truncate">{stage.title}</div>
-                </div>
-                <div className="text-xl font-bold text-textc">{contactsByStage[stage.id].length}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Kanban Board */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-textdim">Carregando leads...</p>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {stages.map(stage => (
+                <Card key={stage.id} className="p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                    <div className="text-textdim text-xs truncate">{stage.title}</div>
+                  </div>
+                  <div className="text-xl font-bold text-textc">{contactsByStage[stage.id as Stage].length}</div>
+                </Card>
+              ))}
             </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="flex gap-4 h-full pb-4">
-                {STAGES.map(stage => (
-                  <KanbanColumn
-                    key={stage.id}
-                    id={stage.id}
-                    title={stage.title}
-                    contacts={contactsByStage[stage.id]}
-                    color={stage.color}
-                  />
-                ))}
+          </div>
+
+          {/* Kanban Board */}
+          <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-textdim">Carregando leads...</p>
               </div>
-              <DragOverlay>
-                {activeContact ? <LeadCard contact={activeContact} /> : null}
-              </DragOverlay>
-            </DndContext>
-          )}
+            ) : (
+              <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="flex gap-4 h-full pb-4">
+                  {stages.map(stage => (
+                    <KanbanColumn
+                      key={stage.id}
+                      id={stage.id}
+                      title={stage.title}
+                      contacts={contactsByStage[stage.id as Stage]}
+                      color={stage.color}
+                      availableLabels={labels}
+                      onLabelsChange={handleLabelsChange}
+                    />
+                  ))}
+                </div>
+                <DragOverlay>
+                  {activeContact ? (
+                    <LeadCard
+                      contact={activeContact}
+                      availableLabels={labels}
+                      onLabelsChange={handleLabelsChange}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            )}
+          </div>
         </div>
       </div>
     </div>

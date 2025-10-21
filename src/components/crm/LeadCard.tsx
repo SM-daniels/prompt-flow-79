@@ -8,12 +8,16 @@ import { Phone, Mail, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { Label } from "./LabelManager";
+import { LabelSelector } from "./LabelSelector";
 
 interface LeadCardProps {
   contact: Contact;
+  availableLabels: Label[];
+  onLabelsChange: (contactId: string, labelIds: string[]) => void;
 }
 
-export function LeadCard({ contact }: LeadCardProps) {
+export function LeadCard({ contact, availableLabels, onLabelsChange }: LeadCardProps) {
   const navigate = useNavigate();
   const {
     attributes,
@@ -53,6 +57,9 @@ export function LeadCard({ contact }: LeadCardProps) {
     };
     return colors[channel] || colors.outro;
   };
+
+  const contactLabels = (contact.metadata?.labels as string[]) || [];
+  const selectedLabels = availableLabels.filter(l => contactLabels.includes(l.id));
 
   return (
     <Card
@@ -98,7 +105,24 @@ export function LeadCard({ contact }: LeadCardProps) {
             )}
           </div>
 
-          {/* Channel Badge */}
+          {/* Labels */}
+          {selectedLabels.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {selectedLabels.map(label => (
+                <Badge
+                  key={label.id}
+                  variant="outline"
+                  className="text-xs px-1.5 py-0 h-5 border-none"
+                  style={{ backgroundColor: label.color.replace('bg-', 'hsl(var(--') + ')' }}
+                >
+                  <div className={`w-2 h-2 rounded-full ${label.color} mr-1`} />
+                  {label.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Channel Badge and Actions */}
           <div className="flex items-center justify-between">
             <Badge
               variant="outline"
@@ -106,14 +130,23 @@ export function LeadCard({ contact }: LeadCardProps) {
             >
               {contact.channel}
             </Badge>
-            <button
-              onClick={handleChatClick}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="text-primary hover:text-primary2 transition-colors p-1.5 rounded hover:bg-primary/10 cursor-pointer z-10"
-              title="Abrir conversa"
-            >
-              <MessageSquare className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                <LabelSelector
+                  availableLabels={availableLabels}
+                  selectedLabelIds={contactLabels}
+                  onLabelsChange={(labelIds) => onLabelsChange(contact.id, labelIds)}
+                />
+              </div>
+              <button
+                onClick={handleChatClick}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="text-primary hover:text-primary2 transition-colors p-1.5 rounded hover:bg-primary/10 cursor-pointer z-10"
+                title="Abrir conversa"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

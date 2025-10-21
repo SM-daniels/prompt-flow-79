@@ -4,15 +4,18 @@ import { Contact } from "@/lib/supabase";
 import { LeadCard } from "./LeadCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "./LabelManager";
 
 interface KanbanColumnProps {
   id: string;
   title: string;
   contacts: Contact[];
   color: string;
+  availableLabels: Label[];
+  onLabelsChange: (contactId: string, labelIds: string[]) => void;
 }
 
-export function KanbanColumn({ id, title, contacts, color }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, contacts, color, availableLabels, onLabelsChange }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
@@ -41,7 +44,14 @@ export function KanbanColumn({ id, title, contacts, color }: KanbanColumnProps) 
               <p className="text-sm text-textdim">Arraste contatos aqui</p>
             </Card>
           ) : (
-            contacts.map((contact) => <LeadCard key={contact.id} contact={contact} />)
+            contacts.map((contact) => (
+              <LeadCard
+                key={contact.id}
+                contact={contact}
+                availableLabels={availableLabels}
+                onLabelsChange={onLabelsChange}
+              />
+            ))
           )}
         </SortableContext>
       </div>

@@ -49,6 +49,8 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
               .select('body, chat')
               .eq('contact_id', contact.id);
 
+            console.log('[ContactsSidebar] contact:', contact.name, 'messages count:', allMessages?.length);
+            
             return {
               ...contact,
               lastMessage: lastMsg || null,
@@ -104,21 +106,35 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
       contact.phone?.includes(searchQuery) ||
       contact.email?.toLowerCase().includes(query);
     
-    if (matchesContact) return true;
+    if (matchesContact) {
+      console.log('[Search] Match by contact info:', contact.name);
+      return true;
+    }
     
     // Search in messages
-    const matchesMessages = (contact as any).messages?.some((msg: Message) => {
+    const messages = (contact as any).messages || [];
+    console.log('[Search] Checking messages for contact:', contact.name, 'count:', messages.length);
+    
+    const matchesMessages = messages.some((msg: Message) => {
       // Search in body
-      if (msg.body?.toLowerCase().includes(query)) return true;
+      if (msg.body?.toLowerCase().includes(query)) {
+        console.log('[Search] Match in body:', msg.body?.substring(0, 50));
+        return true;
+      }
       
       // Search in chat (parsed AI conversations)
       if (msg.chat) {
         try {
           const parsedChat = parseChat(msg.chat);
-          return parsedChat.some(chatMsg => 
+          const found = parsedChat.some(chatMsg => 
             chatMsg.content.toLowerCase().includes(query)
           );
-        } catch {
+          if (found) {
+            console.log('[Search] Match in chat conversation');
+          }
+          return found;
+        } catch (e) {
+          console.error('[Search] Error parsing chat:', e);
           return false;
         }
       }

@@ -190,13 +190,36 @@ export default function CRM() {
     if (!over) return;
 
     const contactId = active.id as string;
-    const newStage = over.id as Stage;
 
-    const contact = contacts.find(c => c.id === contactId);
+    // Determine destination column (stage) correctly
+    const overId = over.id as string;
+    const overContainerId = (over.data?.current as any)?.sortable?.containerId as string | undefined;
+
+    let destinationStage: Stage | null = null;
+
+    // 1) If Sortable provides containerId, prefer it
+    if (overContainerId && stages.some((s) => s.id === overContainerId)) {
+      destinationStage = overContainerId as Stage;
+    } 
+    // 2) If hovering/dropping over the column itself
+    else if (stages.some((s) => s.id === overId)) {
+      destinationStage = overId as Stage;
+    } 
+    // 3) If dropping over another card, find which column contains that card
+    else {
+      const targetStageEntry = stages.find((s) =>
+        contactsByStage[s.id as Stage].some((c) => c.id === overId)
+      );
+      if (targetStageEntry) destinationStage = targetStageEntry.id as Stage;
+    }
+
+    if (!destinationStage) return;
+
+    const contact = contacts.find((c) => c.id === contactId);
     const currentStage = (contact?.metadata?.stage as Stage) || 'novo';
 
-    if (currentStage !== newStage) {
-      updateContactStageMutation.mutate({ contactId, stage: newStage });
+    if (currentStage !== destinationStage) {
+      updateContactStageMutation.mutate({ contactId, stage: destinationStage });
     }
   };
 

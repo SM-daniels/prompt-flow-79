@@ -29,7 +29,7 @@ export default function AppNavigation() {
               <Button
                 variant={isInbox ? "default" : "ghost"}
                 onClick={() => navigate("/app")}
-                className={`group relative h-10 transition-all duration-300 ease-out overflow-hidden ${
+                className={`group h-10 transition-all duration-300 ease-out overflow-hidden ${
                   isInbox
                     ? "bg-primary text-primary-foreground shadow-md w-10 hover:w-auto hover:px-4"
                     : "text-textdim hover:text-textc hover:bg-accent w-10 hover:w-auto hover:px-4"
@@ -41,9 +41,6 @@ export default function AppNavigation() {
                     Inbox
                   </span>
                 </div>
-                {isInbox && (
-                  <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
-                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -56,7 +53,7 @@ export default function AppNavigation() {
               <Button
                 variant={isCRM ? "default" : "ghost"}
                 onClick={() => navigate("/app/crm")}
-                className={`group relative h-10 transition-all duration-300 ease-out overflow-hidden ${
+                className={`group h-10 transition-all duration-300 ease-out overflow-hidden ${
                   isCRM
                     ? "bg-primary text-primary-foreground shadow-md w-10 hover:w-auto hover:px-4"
                     : "text-textdim hover:text-textc hover:bg-accent w-10 hover:w-auto hover:px-4"
@@ -68,9 +65,6 @@ export default function AppNavigation() {
                     CRM
                   </span>
                 </div>
-                {isCRM && (
-                  <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
-                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">

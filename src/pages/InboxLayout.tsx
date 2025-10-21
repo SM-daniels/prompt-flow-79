@@ -50,19 +50,19 @@ export default function InboxLayout() {
       </div>
 
       {/* Main Content - 3 Columns */}
-      <div className="flex w-full pt-16">
+      <div className="flex w-full pt-16 overflow-hidden">
         {/* Column 1: Contacts with Preview */}
-        <div className="w-80 bg-gradient-to-br from-bg1 via-bg1 to-bg2/50 border-r border-borderc/50 shadow-lg">
+        <div className="w-80 shrink-0 bg-gradient-to-br from-bg1 via-bg1 to-bg2/50 border-r border-borderc/50 shadow-lg overflow-hidden">
           <ContactsSidebar selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         </div>
 
         {/* Column 2: Messages Thread */}
-        <div className="flex-1 bg-gradient-to-b from-bg0 to-bg1/30">
+        <div className="flex-1 min-w-0 bg-gradient-to-b from-bg0 to-bg1/30 overflow-hidden">
           <MessagesThread contactId={selectedContactId} />
         </div>
 
         {/* Column 3: Contact Info */}
-        <div className="w-80 bg-gradient-to-bl from-bg1 via-bg1 to-bg2/50 border-l border-borderc/50 shadow-lg">
+        <div className="w-80 shrink-0 bg-gradient-to-bl from-bg1 via-bg1 to-bg2/50 border-l border-borderc/50 shadow-lg overflow-hidden">
           <ContactInfoPanel contactId={selectedContactId} />
         </div>
       </div>

@@ -228,7 +228,7 @@ export default function CRM() {
   return (
     <div className="flex flex-col h-screen bg-bg0">
       {/* Header */}
-      <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
+      <div className="h-16 bg-gradient-to-r from-bg1 via-bg1 to-bg2/80 border-b border-borderc/60 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 shadow-md">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />

@@ -26,7 +26,7 @@ export default function InboxLayout() {
   return (
     <div className="flex h-screen bg-bg0">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-bg1 border-b border-borderc z-10 flex items-center justify-between px-6">
+      <div className="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-bg1 via-bg1 to-bg2/80 border-b border-borderc/60 backdrop-blur-sm z-10 flex items-center justify-between px-6 shadow-md">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
@@ -52,17 +52,17 @@ export default function InboxLayout() {
       {/* Main Content - 3 Columns */}
       <div className="flex w-full pt-16">
         {/* Column 1: Contacts with Preview */}
-        <div className="w-80 border-r border-borderc bg-bg1">
+        <div className="w-80 bg-gradient-to-br from-bg1 via-bg1 to-bg2/50 border-r border-borderc/50 shadow-lg">
           <ContactsSidebar selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         </div>
 
         {/* Column 2: Messages Thread */}
-        <div className="flex-1 bg-bg0">
+        <div className="flex-1 bg-gradient-to-b from-bg0 to-bg1/30">
           <MessagesThread contactId={selectedContactId} />
         </div>
 
         {/* Column 3: Contact Info */}
-        <div className="w-80 border-l border-borderc bg-bg1">
+        <div className="w-80 bg-gradient-to-bl from-bg1 via-bg1 to-bg2/50 border-l border-borderc/50 shadow-lg">
           <ContactInfoPanel contactId={selectedContactId} />
         </div>
       </div>

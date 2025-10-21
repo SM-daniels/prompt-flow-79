@@ -5,7 +5,6 @@ import { LeadCard } from "./LeadCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "./LabelManager";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface KanbanColumnProps {
   id: string;
@@ -33,7 +32,7 @@ export function KanbanColumn({ id, title, contacts, color, availableLabels, onLa
       </div>
 
       {/* Droppable Area with Scroll */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div
           ref={setNodeRef}
           className={`space-y-3 p-2 rounded-lg transition-all ${
@@ -57,7 +56,7 @@ export function KanbanColumn({ id, title, contacts, color, availableLabels, onLa
             )}
           </SortableContext>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

@@ -1,18 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Contact } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -20,20 +12,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { LogOut, Search, MessageSquare, Mail, Phone, Calendar } from "lucide-react";
+import { LogOut, Search, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import starmetaLogo from "@/assets/starmeta-logo.png";
+import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { KanbanColumn } from "@/components/crm/KanbanColumn";
+import { LeadCard } from "@/components/crm/LeadCard";
+import { toast } from "sonner";
 
+type Stage = 'novo' | 'contato' | 'qualificado' | 'negociacao' | 'convertido' | 'perdido';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'site' | 'outro';
+
+const STAGES: { id: Stage; title: string; color: string }[] = [
+  { id: 'novo', title: 'Novo', color: 'bg-blue-500' },
+  { id: 'contato', title: 'Contato Inicial', color: 'bg-purple-500' },
+  { id: 'qualificado', title: 'Qualificado', color: 'bg-yellow-500' },
+  { id: 'negociacao', title: 'Negociação', color: 'bg-orange-500' },
+  { id: 'convertido', title: 'Convertido', color: 'bg-green-500' },
+  { id: 'perdido', title: 'Perdido', color: 'bg-red-500' },
+];
 
 export default function CRM() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const { data: contacts = [], isLoading } = useQuery({
     queryKey: ['crm-contacts', user?.id],
@@ -50,33 +63,92 @@ export default function CRM() {
     enabled: !!user?.id,
   });
 
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = !searchQuery || 
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email?.toLowerCase().includes(searchQuery.toLowerCase());
+  const updateContactStageMutation = useMutation({
+    mutationFn: async ({ contactId, stage }: { contactId: string; stage: Stage }) => {
+      const contact = contacts.find(c => c.id === contactId);
+      if (!contact) throw new Error('Contact not found');
 
-    const matchesChannel = channelFilter === 'all' || contact.channel === channelFilter;
+      const updatedMetadata = {
+        ...(contact.metadata || {}),
+        stage,
+      };
 
-    return matchesSearch && matchesChannel;
+      const { error } = await supabase
+        .from('contacts')
+        .update({ metadata: updatedMetadata })
+        .eq('id', contactId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+      toast.success('Lead movido com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao mover lead');
+    },
   });
 
-  const getChannelBadge = (channel: string) => {
-    const variants: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-      whatsapp: { label: "WhatsApp", variant: "default" },
-      instagram: { label: "Instagram", variant: "secondary" },
-      site: { label: "Site", variant: "outline" },
-      outro: { label: "Outro", variant: "outline" },
+  const filteredContacts = useMemo(() => {
+    return contacts.filter(contact => {
+      const matchesSearch = !searchQuery || 
+        contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contact.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesChannel = channelFilter === 'all' || contact.channel === channelFilter;
+
+      return matchesSearch && matchesChannel;
+    });
+  }, [contacts, searchQuery, channelFilter]);
+
+  const contactsByStage = useMemo(() => {
+    const grouped: Record<Stage, Contact[]> = {
+      novo: [],
+      contato: [],
+      qualificado: [],
+      negociacao: [],
+      convertido: [],
+      perdido: [],
     };
-    
-    const config = variants[channel] || { label: channel, variant: "outline" };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+
+    filteredContacts.forEach(contact => {
+      const stage = (contact.metadata?.stage as Stage) || 'novo';
+      if (grouped[stage]) {
+        grouped[stage].push(contact);
+      }
+    });
+
+    return grouped;
+  }, [filteredContacts]);
+
+  const handleDragStart = (event: DragEndEvent) => {
+    setActiveId(event.active.id as string);
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const contactId = active.id as string;
+    const newStage = over.id as Stage;
+
+    const contact = contacts.find(c => c.id === contactId);
+    const currentStage = (contact?.metadata?.stage as Stage) || 'novo';
+
+    if (currentStage !== newStage) {
+      updateContactStageMutation.mutate({ contactId, stage: newStage });
+    }
+  };
+
+  const activeContact = activeId ? contacts.find(c => c.id === activeId) : null;
 
   return (
     <div className="flex flex-col h-screen bg-bg0">
       {/* Header */}
-      <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6">
+      <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
@@ -108,12 +180,12 @@ export default function CRM() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="p-6 space-y-4 shrink-0">
           {/* Page Header */}
           <div>
-            <h2 className="text-3xl font-bold text-textc mb-2">CRM - Gestão de Leads</h2>
-            <p className="text-textdim">Gerencie e organize seus contatos e leads</p>
+            <h2 className="text-3xl font-bold text-textc mb-2">CRM - Pipeline de Vendas</h2>
+            <p className="text-textdim">Arraste os contatos entre os estágios do funil</p>
           </div>
 
           {/* Filters */}
@@ -143,117 +215,48 @@ export default function CRM() {
             </div>
           </Card>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-4">
-              <div className="text-textdim text-sm mb-1">Total de Leads</div>
-              <div className="text-2xl font-bold text-textc">{contacts.length}</div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-textdim text-sm mb-1">WhatsApp</div>
-              <div className="text-2xl font-bold text-textc">
-                {contacts.filter(c => c.channel === 'whatsapp').length}
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-textdim text-sm mb-1">Instagram</div>
-              <div className="text-2xl font-bold text-textc">
-                {contacts.filter(c => c.channel === 'instagram').length}
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-textdim text-sm mb-1">Site</div>
-              <div className="text-2xl font-bold text-textc">
-                {contacts.filter(c => c.channel === 'site').length}
-              </div>
-            </Card>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            {STAGES.map(stage => (
+              <Card key={stage.id} className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                  <div className="text-textdim text-xs truncate">{stage.title}</div>
+                </div>
+                <div className="text-xl font-bold text-textc">{contactsByStage[stage.id].length}</div>
+              </Card>
+            ))}
           </div>
+        </div>
 
-          {/* Contacts Table */}
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead>Última atualização</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-textdim py-8">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredContacts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-textdim py-8">
-                      {searchQuery || channelFilter !== 'all' 
-                        ? "Nenhum lead encontrado com os filtros aplicados" 
-                        : "Nenhum lead cadastrado ainda"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredContacts.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell className="font-medium text-textc">
-                        {contact.name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {contact.phone && (
-                            <div className="flex items-center gap-2 text-sm text-textdim">
-                              <Phone className="w-3 h-3" />
-                              {contact.phone}
-                            </div>
-                          )}
-                          {contact.email && (
-                            <div className="flex items-center gap-2 text-sm text-textdim">
-                              <Mail className="w-3 h-3" />
-                              {contact.email}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {getChannelBadge(contact.channel)}
-                      </TableCell>
-                      <TableCell className="text-textdim text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3 h-3" />
-                          {formatDistanceToNow(new Date(contact.created_at), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-textdim text-sm">
-                        {formatDistanceToNow(new Date(contact.updated_at), {
-                          addSuffix: true,
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate('/app')}
-                          className="text-primary hover:text-primary2"
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          Ver conversa
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+        {/* Kanban Board */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-textdim">Carregando leads...</p>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex gap-4 h-full pb-4">
+                {STAGES.map(stage => (
+                  <KanbanColumn
+                    key={stage.id}
+                    id={stage.id}
+                    title={stage.title}
+                    contacts={contactsByStage[stage.id]}
+                    color={stage.color}
+                  />
+                ))}
+              </div>
+              <DragOverlay>
+                {activeContact ? <LeadCard contact={activeContact} /> : null}
+              </DragOverlay>
+            </DndContext>
+          )}
         </div>
       </div>
     </div>

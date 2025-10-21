@@ -33,33 +33,48 @@ export default function ContactCard({
   const getInitials = () => {
     return contact.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-   return <button onClick={onClick} className={`block w-full box-border px-2 py-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${isSelected ? 'bg-bg3 border border-primary shadow-glow' : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'} ${className}`}>
-      <div className="flex items-start gap-2 min-w-0 mx-0 px-0 py-px my-0">
+  return (
+    <button 
+      onClick={onClick} 
+      className={`w-full px-2.5 py-2.5 rounded-lg text-left transition-all duration-200 ${
+        isSelected 
+          ? 'bg-bg3 border border-primary shadow-glow' 
+          : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'
+      } ${className}`}
+    >
+      <div className="flex items-start gap-2.5 min-w-0">
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-semibold text-xs">
+        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm">
           {getInitials()}
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <h3 className="font-semibold text-sm text-textc truncate flex-1 min-w-0">{contact.name}</h3>
+        {/* Content */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {/* Header: Name + Icon */}
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-sm text-textc truncate flex-1">
+              {contact.name}
+            </h3>
             <div className="text-textdim flex-shrink-0">
               {getChannelIcon()}
             </div>
           </div>
           
-          {contact.lastMessage ? <>
-              <p className="text-xs text-textdim truncate mb-0.5">
+          {/* Message Preview */}
+          {contact.lastMessage ? (
+            <>
+              <p className="text-xs text-textdim truncate mb-1">
                 {contact.lastMessage.body || 'Mídia'}
               </p>
-              <p className="text-xs text-textdim/80 truncate">
+              <p className="text-xs text-textdim/80">
                 {formatRelative(contact.lastMessage.created_at)}
               </p>
-            </> : <p className="text-xs text-textdim">
-              Sem mensagens
-            </p>}
+            </>
+          ) : (
+            <p className="text-xs text-textdim">Sem mensagens</p>
+          )}
         </div>
       </div>
-    </button>;
+    </button>
+  );
 }

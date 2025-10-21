@@ -161,7 +161,7 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
             description={searchQuery ? 'Tente outra busca' : 'Seus contatos aparecerão aqui'}
           />
         ) : (
-          <div className="p-2 space-y-1">
+          <div className="p-3 space-y-2">
             {filteredContacts.map((contact) => (
               <ContactCard
                 key={contact.id}

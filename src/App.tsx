@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import InboxLayout from "./pages/InboxLayout";
+import CRM from "./pages/CRM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/login" element={<Auth />} />
             <Route path="/app" element={<ProtectedRoute />}>
               <Route index element={<InboxLayout />} />
+              <Route path="crm" element={<CRM />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

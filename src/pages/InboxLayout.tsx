@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, LayoutGrid } from "lucide-react";
 import ContactsSidebar from "@/components/inbox/ContactsSidebar";
 import MessagesThread from "@/components/inbox/MessagesThread";
 import ContactInfoPanel from "@/components/inbox/ContactInfoPanel";
@@ -9,15 +10,26 @@ import starmetaLogo from "@/assets/starmeta-logo.png";
 
 export default function InboxLayout() {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
 
   return (
     <div className="flex h-screen bg-bg0">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-bg1 border-b border-borderc z-10 flex items-center justify-between px-6">
-        <div className="flex items-center gap-3">
-          <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
-          <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
+            <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
+          </div>
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/app/crm')}
+            className="text-textdim hover:text-textc"
+          >
+            <LayoutGrid className="w-4 h-4 mr-2" />
+            CRM
+          </Button>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-textdim">{user?.email}</span>

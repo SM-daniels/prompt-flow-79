@@ -239,7 +239,8 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+      <ScrollArea className="flex-1">
+        <div ref={scrollRef} className="p-6">
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
@@ -259,6 +260,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
             {renderMessages()}
           </div>
         )}
+        </div>
       </ScrollArea>
 
       {/* Composer */}

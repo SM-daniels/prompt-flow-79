@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, Contact } from '@/lib/supabase';
+import { supabase, Contact, Message } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +8,7 @@ import { Search, Users } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import ContactCard from './ContactCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { parseChat } from '@/lib/chatParser';
 
 type ContactsSidebarProps = {
   selectedContactId: string | null;
@@ -30,7 +31,7 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
 
       console.log('[ContactsSidebar] user:', user?.id, 'org:', userOrg?.organization_id, 'err:', userOrgError);
 
-      // Helper to enrich contacts with last message
+      // Helper to enrich contacts with last message and all messages for search
       const withPreview = async (list: any[]) => {
         return Promise.all(
           (list as Contact[]).map(async (contact) => {
@@ -42,9 +43,16 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
               .limit(1)
               .maybeSingle();
 
+            // Fetch all messages for search purposes
+            const { data: allMessages } = await supabase
+              .from('messages')
+              .select('body, chat')
+              .eq('contact_id', contact.id);
+
             return {
               ...contact,
-              lastMessage: lastMsg || null
+              lastMessage: lastMsg || null,
+              messages: allMessages || []
             };
           })
         );
@@ -87,11 +95,39 @@ export default function ContactsSidebar({ selectedContactId, onSelectContact }: 
     enabled: !!user
   });
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.phone?.includes(searchQuery) ||
-    contact.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredContacts = contacts.filter(contact => {
+    const query = searchQuery.toLowerCase();
+    
+    // Search in contact info
+    const matchesContact = 
+      contact.name.toLowerCase().includes(query) ||
+      contact.phone?.includes(searchQuery) ||
+      contact.email?.toLowerCase().includes(query);
+    
+    if (matchesContact) return true;
+    
+    // Search in messages
+    const matchesMessages = (contact as any).messages?.some((msg: Message) => {
+      // Search in body
+      if (msg.body?.toLowerCase().includes(query)) return true;
+      
+      // Search in chat (parsed AI conversations)
+      if (msg.chat) {
+        try {
+          const parsedChat = parseChat(msg.chat);
+          return parsedChat.some(chatMsg => 
+            chatMsg.content.toLowerCase().includes(query)
+          );
+        } catch {
+          return false;
+        }
+      }
+      
+      return false;
+    });
+    
+    return matchesMessages;
+  });
 
   return (
     <div className="flex flex-col h-full">

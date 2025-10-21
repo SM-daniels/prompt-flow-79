@@ -52,7 +52,7 @@ export default function InboxLayout() {
       {/* Main Content - 3 Columns */}
       <div className="flex w-full pt-16 h-screen overflow-hidden">
         {/* Column 1: Contacts with Preview */}
-        <div className="flex-none w-80 min-w-[280px] max-w-[340px] bg-gradient-to-br from-bg1 via-bg1 to-bg2/50 border-r border-borderc/50 shadow-lg overflow-y-auto">
+        <div className="flex-none w-96 min-w-[320px] max-w-[400px] bg-gradient-to-br from-bg1 via-bg1 to-bg2/50 border-r border-borderc/50 shadow-lg overflow-y-auto">
           <ContactsSidebar selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         </div>
 

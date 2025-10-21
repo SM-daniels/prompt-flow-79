@@ -33,10 +33,10 @@ export default function ContactCard({
   const getInitials = () => {
     return contact.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-  return <button onClick={onClick} className={`block w-full box-border p-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${isSelected ? 'bg-bg3 border border-primary shadow-glow' : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'} ${className}`}>
-      <div className="flex items-start gap-2.5 min-w-0 mx-0 px-0 py-px my-0">
+   return <button onClick={onClick} className={`block w-full box-border px-2 py-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${isSelected ? 'bg-bg3 border border-primary shadow-glow' : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'} ${className}`}>
+      <div className="flex items-start gap-2 min-w-0 mx-0 px-0 py-px my-0">
         {/* Avatar */}
-        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-semibold text-xs">
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-semibold text-xs">
           {getInitials()}
         </div>
 

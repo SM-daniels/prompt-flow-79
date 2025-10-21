@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, LayoutGrid } from "lucide-react";
 import ContactsSidebar from "@/components/inbox/ContactsSidebar";
@@ -11,7 +11,17 @@ import starmetaLogo from "@/assets/starmeta-logo.png";
 export default function InboxLayout() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+
+  // Handle navigation from CRM with pre-selected contact
+  useEffect(() => {
+    if (location.state?.selectedContactId) {
+      setSelectedContactId(location.state.selectedContactId);
+      // Clear the state to prevent re-selecting on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   return (
     <div className="flex h-screen bg-bg0">

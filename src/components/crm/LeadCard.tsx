@@ -4,7 +4,7 @@ import { Contact } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Phone, Mail, MessageSquare, GripVertical } from "lucide-react";
+import { Phone, Mail, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +30,11 @@ export function LeadCard({ contact }: LeadCardProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/app', { state: { selectedContactId: contact.id } });
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -53,18 +58,11 @@ export function LeadCard({ contact }: LeadCardProps) {
     <Card
       ref={setNodeRef}
       style={style}
-      className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 bg-bg2 border-borderc group"
+      {...attributes}
+      {...listeners}
+      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-200 bg-bg2 border-borderc group"
     >
       <div className="flex items-start gap-3">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing pt-1"
-        >
-          <GripVertical className="w-4 h-4 text-textdim" />
-        </div>
-
         {/* Avatar */}
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarFallback className="bg-primary/10 text-primary text-sm">
@@ -109,8 +107,10 @@ export function LeadCard({ contact }: LeadCardProps) {
               {contact.channel}
             </Badge>
             <button
-              onClick={() => navigate('/app')}
-              className="text-primary hover:text-primary2 transition-colors p-1 rounded hover:bg-primary/10"
+              onClick={handleChatClick}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="text-primary hover:text-primary2 transition-colors p-1.5 rounded hover:bg-primary/10 cursor-pointer z-10"
+              title="Abrir conversa"
             >
               <MessageSquare className="w-4 h-4" />
             </button>

@@ -62,7 +62,7 @@ export default function InboxLayout() {
         </div>
 
         {/* Column 3: Contact Info */}
-        <div className="flex-none w-80 min-w-[320px] bg-gradient-to-bl from-bg1 via-bg1 to-bg2/50 border-l border-borderc/50 shadow-lg overflow-y-auto relative z-[2]">
+        <div className="flex-none w-72 min-w-[288px] bg-gradient-to-bl from-bg1 via-bg1 to-bg2/50 border-l border-borderc/50 shadow-lg overflow-y-auto relative z-[2]">
           <ContactInfoPanel contactId={selectedContactId} />
         </div>
       </div>

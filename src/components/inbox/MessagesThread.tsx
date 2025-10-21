@@ -240,7 +240,7 @@ export default function MessagesThread({ contactId }: MessagesThreadProps) {
     <div className="flex flex-col h-full">
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="p-6">
+        <div ref={scrollRef} className="px-3 py-6">
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (

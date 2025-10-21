@@ -17,7 +17,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={`flex ${isFromUser ? 'justify-start' : 'justify-end'}`}>
       <div
-        className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isFromUser
             ? 'bg-bg2 text-textc border border-borderc'
             : 'bg-primary text-white shadow-glow'

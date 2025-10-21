@@ -34,13 +34,13 @@ export default function ContactCard({ contact, isSelected, onClick }: ContactCar
   return (
     <button
       onClick={onClick}
-      className={`w-full p-2.5 rounded-lg text-left transition-all duration-200 ${
+      className={`block w-full max-w-full mr-1 p-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${
         isSelected 
           ? 'bg-bg3 border border-primary shadow-glow' 
           : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'
       }`}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-2.5 min-w-0">
         {/* Avatar */}
         <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white font-semibold text-xs">
           {getInitials()}

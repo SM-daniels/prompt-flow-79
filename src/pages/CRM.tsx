@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, Contact } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import {
@@ -12,15 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogOut, Search, MessageSquare } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import starmetaLogo from "@/assets/starmeta-logo.png";
+import { Search } from "lucide-react";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/crm/KanbanColumn";
 import { LeadCard } from "@/components/crm/LeadCard";
 import { LabelManager, Label } from "@/components/crm/LabelManager";
 import { StageEditor, StageConfig } from "@/components/crm/StageEditor";
 import { toast } from "sonner";
+import AppNavigation from "@/components/AppNavigation";
 
 type Stage = 'novo' | 'contato' | 'qualificado' | 'negociacao' | 'convertido' | 'perdido';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'site' | 'outro';
@@ -40,8 +38,7 @@ const STORAGE_KEYS = {
 };
 
 export default function CRM() {
-  const { signOut, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
@@ -227,46 +224,16 @@ export default function CRM() {
 
   return (
     <div className="flex flex-col h-screen bg-bg0">
-      {/* Header */}
-      <div className="h-16 bg-gradient-to-r from-bg1 via-bg1 to-bg2/80 border-b border-borderc/60 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 shadow-md">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
-              <h1 className="text-xl font-bold text-textc">Starmeta Legacy</h1>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/app')}
-                className="text-textdim hover:text-textc"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Inbox
-              </Button>
-              <Button 
-                variant="secondary"
-                className="text-textc"
-              >
-                CRM
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-textdim">{user?.email}</span>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <AppNavigation />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="p-6 space-y-4 shrink-0">
+      <div className="flex-1 overflow-hidden flex flex-col pt-16">
+          <div className="px-6 pt-6 pb-4 space-y-4 shrink-0 bg-gradient-to-b from-bg0 to-transparent">
             {/* Page Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-textc mb-2">CRM - Pipeline de Vendas</h2>
-                <p className="text-textdim">Arraste os contatos entre os estágios do funil</p>
+                <h2 className="text-2xl font-bold text-textc mb-1">CRM - Pipeline de Vendas</h2>
+                <p className="text-sm text-textdim">Arraste os contatos entre os estágios do funil</p>
               </div>
               <div className="flex gap-2">
                 <LabelManager labels={labels} onLabelsChange={setLabels} />

@@ -34,7 +34,7 @@ export default function ContactCard({ contact, isSelected, onClick }: ContactCar
   return (
     <button
       onClick={onClick}
-      className={`block w-full max-w-full mr-1 p-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${
+      className={`block w-full p-2.5 rounded-lg text-left transition-all duration-200 overflow-hidden ${
         isSelected 
           ? 'bg-bg3 border border-primary shadow-glow' 
           : 'bg-bg1 border border-borderc hover:bg-bg2 hover:border-primary/50'

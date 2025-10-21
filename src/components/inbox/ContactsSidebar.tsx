@@ -126,7 +126,7 @@ export default function ContactsSidebar({
       <ScrollArea className="flex-1">
         {isLoading ? <div className="p-4 space-y-3">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full bg-bg2" />)}
-          </div> : filteredContacts.length === 0 ? <EmptyState icon={Users} title="Nenhum contato encontrado" description={searchQuery ? 'Tente outra busca' : 'Seus contatos aparecerão aqui'} /> : <div className="p-3 space-y-2">
+          </div> : filteredContacts.length === 0 ? <EmptyState icon={Users} title="Nenhum contato encontrado" description={searchQuery ? 'Tente outra busca' : 'Seus contatos aparecerão aqui'} /> : <div className="p-3 space-y-2 flex flex-col items-center">
             {filteredContacts.map(contact => <ContactCard key={contact.id} contact={contact} isSelected={contact.id === selectedContactId} onClick={() => onSelectContact(contact.id)} className="py-[8px] my-[6px] mx-[2px] px-[7px]" />)}
           </div>}
       </ScrollArea>

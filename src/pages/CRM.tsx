@@ -18,7 +18,6 @@ import starmetaLogo from "@/assets/starmeta-logo.png";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/crm/KanbanColumn";
 import { LeadCard } from "@/components/crm/LeadCard";
-import { ContactsSidebar } from "@/components/crm/ContactsSidebar";
 import { LabelManager, Label } from "@/components/crm/LabelManager";
 import { StageEditor, StageConfig } from "@/components/crm/StageEditor";
 import { toast } from "sonner";
@@ -47,7 +46,6 @@ export default function CRM() {
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedContactId, setSelectedContactId] = useState<string>();
   
   // Load stages and labels from localStorage
   const [stages, setStages] = useState<StageConfig[]>(() => {
@@ -205,18 +203,9 @@ export default function CRM() {
   const activeContact = activeId ? contacts.find(c => c.id === activeId) : null;
 
   return (
-    <div className="flex h-screen bg-bg0">
-      {/* Sidebar */}
-      <ContactsSidebar
-        contacts={filteredContacts}
-        selectedContactId={selectedContactId}
-        onSelectContact={setSelectedContactId}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
+    <div className="flex flex-col h-screen bg-bg0">
+      {/* Header */}
+      <div className="h-16 bg-bg1 border-b border-borderc flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <img src={starmetaLogo} alt="Starmeta Logo" className="h-8 w-8" />
@@ -241,14 +230,14 @@ export default function CRM() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-textdim">{user?.email}</span>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="text-textdim hover:text-textc">
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
+      </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden flex flex-col">
           <div className="p-6 space-y-4 shrink-0">
             {/* Page Header */}
             <div className="flex items-center justify-between">
@@ -289,22 +278,22 @@ export default function CRM() {
             </div>
           </Card>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              {stages.map(stage => (
-                <Card key={stage.id} className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                    <div className="text-textdim text-xs truncate">{stage.title}</div>
-                  </div>
-                  <div className="text-xl font-bold text-textc">{contactsByStage[stage.id as Stage].length}</div>
-                </Card>
-              ))}
-            </div>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            {stages.map(stage => (
+              <Card key={stage.id} className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+                  <div className="text-textdim text-xs truncate">{stage.title}</div>
+                </div>
+                <div className="text-xl font-bold text-textc">{contactsByStage[stage.id as Stage].length}</div>
+              </Card>
+            ))}
           </div>
+        </div>
 
-          {/* Kanban Board */}
-          <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
+        {/* Kanban Board */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-textdim">Carregando leads...</p>
@@ -339,7 +328,6 @@ export default function CRM() {
                 </DragOverlay>
               </DndContext>
             )}
-          </div>
         </div>
       </div>
     </div>

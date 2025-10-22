@@ -29,7 +29,7 @@ export default function AppNavigation() {
               <Button
                 variant={isInbox ? "default" : "ghost"}
                 onClick={() => navigate("/app")}
-                className={`group h-10 transition-all duration-300 ease-out overflow-hidden ${
+                className={`group h-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:rounded-md ${
                   isInbox
                     ? "bg-primary text-primary-foreground shadow-md w-10 hover:w-auto hover:px-4"
                     : "text-textdim hover:text-textc hover:bg-accent w-10 hover:w-auto hover:px-4"
@@ -53,7 +53,7 @@ export default function AppNavigation() {
               <Button
                 variant={isCRM ? "default" : "ghost"}
                 onClick={() => navigate("/app/crm")}
-                className={`group h-10 transition-all duration-300 ease-out overflow-hidden ${
+                className={`group h-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:rounded-md ${
                   isCRM
                     ? "bg-primary text-primary-foreground shadow-md w-10 hover:w-auto hover:px-4"
                     : "text-textdim hover:text-textc hover:bg-accent w-10 hover:w-auto hover:px-4"

@@ -29,18 +29,16 @@ export default function AppNavigation() {
               <Button
                 variant={isInbox ? "default" : "ghost"}
                 onClick={() => navigate("/app")}
-                className={`group h-10 w-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:w-auto hover:px-4 ${
+                className={`group h-10 w-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:w-auto hover:px-4 flex items-center justify-center ${
                   isInbox
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "text-textdim hover:text-textc hover:bg-accent"
                 }`}
               >
-                <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-                  <MessageSquare className="w-5 h-5 flex-shrink-0" />
-                  <span className="overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100">
-                    Inbox
-                  </span>
-                </div>
+                <MessageSquare className="w-5 h-5 flex-shrink-0" />
+                <span className="overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 group-hover:ml-2 whitespace-nowrap">
+                  Inbox
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -53,18 +51,16 @@ export default function AppNavigation() {
               <Button
                 variant={isCRM ? "default" : "ghost"}
                 onClick={() => navigate("/app/crm")}
-                className={`group h-10 w-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:w-auto hover:px-4 ${
+                className={`group h-10 w-10 transition-all duration-300 ease-out overflow-hidden rounded-full hover:w-auto hover:px-4 flex items-center justify-center ${
                   isCRM
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "text-textdim hover:text-textc hover:bg-accent"
                 }`}
               >
-                <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-                  <LayoutGrid className="w-5 h-5 flex-shrink-0" />
-                  <span className="overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100">
-                    CRM
-                  </span>
-                </div>
+                <LayoutGrid className="w-5 h-5 flex-shrink-0" />
+                <span className="overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 group-hover:ml-2 whitespace-nowrap">
+                  CRM
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
